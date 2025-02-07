@@ -44,9 +44,9 @@ export class Lobby {
     const floorGeometry = new THREE.PlaneGeometry(Lobby.LobbyLength, Lobby.LobbyWidth);
     
     Promise.all([
-      this.loadTexture("/textures/Fabric029_1K-JPG_Color.jpg"),
-      this.loadTexture("/textures/Fabric029_1K-JPG_NormalGL.jpg"),
-      this.loadTexture("/textures/Fabric029_1K-JPG_Roughness.jpg"),
+      this.loadTexture("/textures/lobby/Fabric029_1K-JPG_Color.jpg"),
+      this.loadTexture("/textures/lobby/Fabric029_1K-JPG_NormalGL.jpg"),
+      this.loadTexture("/textures/lobby/Fabric029_1K-JPG_Roughness.jpg"),
     ]).then(([colorMap, normalMap, roughnessMap]) => {
       [colorMap, normalMap, roughnessMap].forEach((map) => {
         map.wrapS = map.wrapT = THREE.RepeatWrapping;
@@ -70,9 +70,9 @@ export class Lobby {
     const wallGeometry = new THREE.PlaneGeometry(Lobby.LobbyWidth, Lobby.CeilingHeight);
     
     Promise.all([
-      this.loadTexture("/textures/Ground078_1K-JPG_Color.jpg"),
-      this.loadTexture("/textures/Ground078_1K-JPG_NormalGL.jpg"),
-      this.loadTexture("/textures/Ground078_1K-JPG_Roughness.jpg"),
+      this.loadTexture("/textures/lobby/Ground078_1K-JPG_Color.jpg"),
+      this.loadTexture("/textures/lobby/Ground078_1K-JPG_NormalGL.jpg"),
+      this.loadTexture("/textures/lobby/Ground078_1K-JPG_Roughness.jpg"),
     ]).then(([brickColor, brickNormal, brickRoughness]) => {
       [brickColor, brickNormal, brickRoughness].forEach((map) => {
         map.wrapS = map.wrapT = THREE.RepeatWrapping;
@@ -116,7 +116,7 @@ export class Lobby {
   }
 
   private initLights(): void {
-    this.loader.load("/models/torch_stick.glb", (gltf) => {
+    this.loader.load("/models/lobby/torch_stick.glb", (gltf) => {
       const torchModel = gltf.scene;
       torchModel.scale.set(30, 30, 30);
 
@@ -140,7 +140,7 @@ export class Lobby {
       });
     });
     // Load and place wall lamps (unchanged)
-    this.loader.load("/models/low_poly_psx_wall_lamp.glb", (gltf) => {
+    this.loader.load("/models/lobby/low_poly_psx_wall_lamp.glb", (gltf) => {
         const model = gltf.scene;
         model.scale.set(30, 30, 30);
 
@@ -169,7 +169,7 @@ export class Lobby {
   }
 
   private initDoors(): void {
-    this.loader.load("/models/medieval_door.glb", (gltf) => {
+    this.loader.load("/models/lobby/medieval_door.glb", (gltf) => {
       const door = gltf.scene;
       door.scale.set(0.06, 0.06, 0.06);
 
