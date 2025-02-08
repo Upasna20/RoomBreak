@@ -1,15 +1,16 @@
-import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
-import * as THREE from 'three';
+import * as THREE from "three";
+import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls.js";
 
-export class GameControls {
-    private controls: PointerLockControls;
-    private moveForward: boolean = false;
-    private moveBackward: boolean = false;
-    private moveLeft: boolean = false;
-    private moveRight: boolean = false;
+export class Controls {
+    public pointerLockControls: PointerLockControls;
+    public moveForward = false;
+    public moveBackward = false;
+    public moveLeft = false;
+    public moveRight = false;
+    public moveSpeed = 1;
 
-    constructor(camera: THREE.Camera, domElement: HTMLElement) {
-        this.controls = new PointerLockControls(camera, domElement);
+    constructor(camera: THREE.PerspectiveCamera, renderer: THREE.WebGLRenderer) {
+        this.pointerLockControls = new PointerLockControls(camera, renderer.domElement);
         this.setupKeyboardControls();
     }
 
@@ -53,25 +54,27 @@ export class GameControls {
                 case 'KeyD':
                     this.moveRight = false;
                     break;
+                case 'Escape':
+                    this.pointerLockControls.unlock();
+                    break;
             }
         });
     }
 
     public lock(): void {
-        this.controls.lock();
+        this.pointerLockControls.lock();
     }
 
     public unlock(): void {
-        this.controls.unlock();
+        this.pointerLockControls.unlock();
     }
 
     public update(): void {
-        if (this.controls.isLocked) {
-            const speed = 1;
-            if (this.moveForward) this.controls.moveForward(speed);
-            if (this.moveBackward) this.controls.moveForward(-speed);
-            if (this.moveLeft) this.controls.moveRight(-speed);
-            if (this.moveRight) this.controls.moveRight(speed);
+        if (this.pointerLockControls.isLocked) {
+            if (this.moveForward) this.pointerLockControls.moveForward(this.moveSpeed);
+            if (this.moveBackward) this.pointerLockControls.moveForward(-this.moveSpeed);
+            if (this.moveLeft) this.pointerLockControls.moveRight(-this.moveSpeed);
+            if (this.moveRight) this.pointerLockControls.moveRight(this.moveSpeed);
         }
     }
 }

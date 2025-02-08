@@ -1,22 +1,33 @@
-import { Game } from './src/core/Game.ts';
+import { Game } from "./src/core/game.ts";
+import * as THREE from "three";
 
-document.addEventListener('DOMContentLoaded', () => {
-    const game = new Game();
+window.onload = () => {
+    // Initialize Scene
+    const scene = new THREE.Scene();
 
-    // Create and configure the start button
-    const startButton: HTMLButtonElement = document.createElement('button');
-    startButton.textContent = 'Start Game';
-    startButton.style.position = 'absolute';
-    startButton.style.top = '50%';
-    startButton.style.left = '50%';
-    startButton.style.transform = 'translate(-50%, -50%)';
+    // Set Up Camera
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 3, 7.3);
 
-    startButton.addEventListener('click', () => {
-        if (game.controls && typeof game.controls.lock === 'function') {
-            game.controls.lock();
-        }
-        startButton.style.display = 'none';
+    // Set Up Renderer
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    // Attach Renderer to DOM
+    document.body.appendChild(renderer.domElement);
+
+    // Create Game Instance
+    const game = new Game(scene, camera, renderer);
+
+    // Start Game
+    game.init();
+
+    // Handle Global Events (e.g., window resize)
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
     });
-
-    document.body.appendChild(startButton);
-});
+};
