@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { Player } from "./Player.ts";
 import { GameControls } from "./Controls.ts";
-import { Lobby } from "../scenes/Lobby.js";
+import { Lobby } from "../scenes/Lobby.ts";
 
 type Room = {
   enter: () => void;
@@ -52,7 +52,7 @@ export class Game {
   }
 
   private setupLighting(): void {
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.05); // Soft global light
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.03); // Soft global light
     this.scene.add(ambientLight);
   }
 

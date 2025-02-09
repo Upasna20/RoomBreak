@@ -1,10 +1,21 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 export class Lobby {
   static LobbyLength: number = 200;
   static LobbyWidth: number = 200;
   static CeilingHeight: number = 100;
+  static DoorWidth: number = 19;
+  static DoorHeight: number = 45;
+  static WallPanelWidth: number = 100;
+  static DoorPositions = [
+    { x: Lobby.LobbyLength / 2 - 3, z: -50, rotation: - Math.PI / 2 },
+    { x: -Lobby.LobbyLength / 2 + 3, z: -50, rotation: Math.PI  / 2},
+    { x: Lobby.LobbyLength / 2 - 3, z: 50, rotation: - Math.PI / 2 },
+    { x: -Lobby.LobbyLength / 2 + 3, z: 50, rotation: Math.PI / 2 },
+  ];
+  
 
   private scene: THREE.Scene;
   private renderer: THREE.WebGLRenderer;
@@ -12,20 +23,71 @@ export class Lobby {
   private walls: THREE.Mesh[] = [];
   private loader: GLTFLoader;
 
-  constructor(scene: THREE.Scene, renderer: THREE.WebGLRenderer) {
+  constructor(
+    scene: THREE.Scene,
+    renderer: THREE.WebGLRenderer,
+  ) {
     this.scene = scene;
     this.renderer = renderer;
     this.loader = new GLTFLoader();
 
     this.initFloor();
-    this.initWalls();
+    this.initWalls(Lobby.WallPanelWidth, Lobby.LobbyLength, Lobby.CeilingHeight, Lobby.DoorWidth, Lobby.DoorHeight, { left: [-50, 50], right: [-50, 50] });
     this.initCeiling();
     this.initLights();
     this.initDoors();
+    // this.addOutsideLight();
+    // this.attachLightToCamera(camera);
   }
 
   getWalls(): THREE.Mesh[] {
     return this.walls;
+  }
+  private attachLightToCamera(camera: THREE.PerspectiveCamera): void {
+    const cameraLight = new THREE.PointLight(0xffffff, 5, 500); // Bright white light
+    cameraLight.position.set(0, 0, 0); // Start at the camera's position
+
+    // Create a group to hold both the camera and the light
+    const cameraGroup = new THREE.Group();
+    cameraGroup.add(camera);
+    cameraGroup.add(cameraLight);
+
+    this.scene.add(cameraGroup);
+
+    // Update the light's position to follow the camera
+    const updateLight = () => {
+      cameraLight.position.copy(camera.position);
+    };
+
+    // Add this update function to your render loop
+    const animate = () => {
+      updateLight();
+      requestAnimationFrame(animate);
+    };
+    animate();
+  }
+
+  private addOutsideLight(): void {
+    const outsideLight = new THREE.DirectionalLight(0xffa500, 2); // Bright white light
+    outsideLight.position.set(
+      0,
+      Lobby.CeilingHeight * 2,
+      -Lobby.LobbyWidth * 1.5
+    ); // Position far outside the back wall
+    outsideLight.target.position.set(0, Lobby.CeilingHeight / 2, 0); // Aim towards the center of the lobby
+    outsideLight.castShadow = true;
+
+    // Optional: Adjust shadow properties for better visibility
+    outsideLight.shadow.mapSize.set(2048, 2048);
+    outsideLight.shadow.camera.near = 1;
+    outsideLight.shadow.camera.far = 500;
+    outsideLight.shadow.camera.left = -Lobby.LobbyLength;
+    outsideLight.shadow.camera.right = Lobby.LobbyLength;
+    outsideLight.shadow.camera.top = Lobby.CeilingHeight * 2;
+    outsideLight.shadow.camera.bottom = -Lobby.CeilingHeight * 2;
+
+    this.scene.add(outsideLight);
+    this.scene.add(outsideLight.target);
   }
 
   private loadTexture(path: string): Promise<THREE.Texture> {
@@ -41,8 +103,11 @@ export class Lobby {
   }
 
   private initFloor(): void {
-    const floorGeometry = new THREE.PlaneGeometry(Lobby.LobbyLength, Lobby.LobbyWidth);
-    
+    const floorGeometry = new THREE.PlaneGeometry(
+      Lobby.LobbyLength,
+      Lobby.LobbyWidth
+    );
+
     Promise.all([
       this.loadTexture("/textures/lobby/Fabric029_1K-JPG_Color.jpg"),
       this.loadTexture("/textures/lobby/Fabric029_1K-JPG_NormalGL.jpg"),
@@ -66,48 +131,13 @@ export class Lobby {
     });
   }
 
-  private initWalls(): void {
-    const wallGeometry = new THREE.PlaneGeometry(Lobby.LobbyWidth, Lobby.CeilingHeight);
-    
-    Promise.all([
-      this.loadTexture("/textures/lobby/Ground078_1K-JPG_Color.jpg"),
-      this.loadTexture("/textures/lobby/Ground078_1K-JPG_NormalGL.jpg"),
-      this.loadTexture("/textures/lobby/Ground078_1K-JPG_Roughness.jpg"),
-    ]).then(([brickColor, brickNormal, brickRoughness]) => {
-      [brickColor, brickNormal, brickRoughness].forEach((map) => {
-        map.wrapS = map.wrapT = THREE.RepeatWrapping;
-        map.repeat.set(8, 4);
-      });
-
-      const wallMaterial = new THREE.MeshStandardMaterial({
-        map: brickColor,
-        normalMap: brickNormal,
-        roughnessMap: brickRoughness,
-      });
-
-      const positions = [
-        { x: 0, y: Lobby.CeilingHeight / 2, z: -Lobby.LobbyWidth / 2, rotation: 0 },
-        { x: 0, y: Lobby.CeilingHeight / 2, z: Lobby.LobbyWidth / 2, rotation: Math.PI },
-        { x: -Lobby.LobbyLength / 2, y: Lobby.CeilingHeight / 2, z: 0, rotation: Math.PI / 2 },
-        { x: Lobby.LobbyLength / 2, y: Lobby.CeilingHeight / 2, z: 0, rotation: -Math.PI / 2 },
-      ];
-
-      positions.forEach(({ x, y, z, rotation }) => {
-        const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-        wall.position.set(x, y, z);
-        wall.rotation.y = rotation;
-        wall.receiveShadow = true;
-        wall.castShadow = true;
-        this.scene.add(wall);
-        this.walls.push(wall);
-      });
-    });
-  }
-
   private initCeiling(): void {
-    const ceilingGeometry = new THREE.PlaneGeometry(Lobby.LobbyLength, Lobby.LobbyWidth);
+    const ceilingGeometry = new THREE.PlaneGeometry(
+      Lobby.LobbyLength,
+      Lobby.LobbyWidth
+    );
     const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
-    
+
     const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
     ceiling.position.set(0, Lobby.CeilingHeight, 0);
     ceiling.rotation.x = Math.PI / 2;
@@ -141,46 +171,214 @@ export class Lobby {
     });
     // Load and place wall lamps (unchanged)
     this.loader.load("/models/lobby/low_poly_psx_wall_lamp.glb", (gltf) => {
-        const model = gltf.scene;
-        model.scale.set(30, 30, 30);
+      const model = gltf.scene;
+      model.scale.set(30, 30, 30);
 
-        const lampPositions = [
-            { x: 0, y: 2 * Lobby.CeilingHeight / 3, z: -Lobby.LobbyWidth / 2, rotation: 0 },   // Back Wall
-            { x: 0, y: 2 * Lobby.CeilingHeight / 3, z: Lobby.LobbyWidth / 2, rotation: Math.PI },  // Front Wall
-            { x: -Lobby.LobbyLength / 2, y: 2 * Lobby.CeilingHeight / 3, z: 0, rotation: Math.PI / 2 }, // Left Wall
-            { x: Lobby.LobbyLength / 2, y: 2 * Lobby.CeilingHeight / 3, z: 0, rotation: -Math.PI / 2 }, // Right Wall
-        ];
+      const lampPositions = [
+        {
+          x: 0,
+          y: (2 * Lobby.CeilingHeight) / 3,
+          z: -Lobby.LobbyWidth / 2,
+          rotation: 0,
+        }, // Back Wall
+        {
+          x: 0,
+          y: (2 * Lobby.CeilingHeight) / 3,
+          z: Lobby.LobbyWidth / 2,
+          rotation: Math.PI,
+        }, // Front Wall
+        {
+          x: -Lobby.LobbyLength / 2,
+          y: (2 * Lobby.CeilingHeight) / 3,
+          z: 0,
+          rotation: Math.PI / 2,
+        }, // Left Wall
+        {
+          x: Lobby.LobbyLength / 2,
+          y: (2 * Lobby.CeilingHeight) / 3,
+          z: 0,
+          rotation: -Math.PI / 2,
+        }, // Right Wall
+      ];
 
-        lampPositions.forEach((pos) => {
-            const lamp = model.clone();
-            lamp.position.set(pos.x, pos.y, pos.z);
-            lamp.rotation.y = pos.rotation;
+      lampPositions.forEach((pos) => {
+        const lamp = model.clone();
+        lamp.position.set(pos.x, pos.y, pos.z);
+        lamp.rotation.y = pos.rotation;
 
-            const light = new THREE.PointLight(0xffa500, 500, 40);
-            light.position.set(pos.x, pos.y, pos.z);
-            light.castShadow = true;
-            light.shadow.mapSize.set(1024, 1024);
-            light.shadow.bias = -0.005;
+        const light = new THREE.PointLight(0xffa500, 500, 80);
+        light.position.set(pos.x, pos.y, pos.z);
+        light.castShadow = true;
+        light.shadow.mapSize.set(1024, 1024);
+        light.shadow.bias = -0.005;
 
-            this.scene.add(lamp);
-            this.scene.add(light);
-        });
+        this.scene.add(lamp);
+        this.scene.add(light);
+      });
     });
   }
+
+  private createWallWithDoors(
+    wallWidth: number,
+    wallHeight: number,
+    doorWidth: number,
+    doorHeight: number
+  ): THREE.BufferGeometry {
+    const leftWidth = (-doorWidth / 2) + wallWidth / 2;
+    const rightWidth = (wallWidth / 2) - doorWidth / 2;
+  
+    // Create individual geometries
+    const leftGeometry = new THREE.PlaneGeometry(leftWidth, wallHeight);
+    const rightGeometry = new THREE.PlaneGeometry(rightWidth, wallHeight);
+    const topGeometry = new THREE.PlaneGeometry(wallWidth, wallHeight - doorHeight);
+  
+    // Apply transformations
+    leftGeometry.applyMatrix4(
+      new THREE.Matrix4().makeTranslation(-wallWidth / 2 + leftWidth / 2, wallHeight / 2, 0)
+    );
+    rightGeometry.applyMatrix4(
+      new THREE.Matrix4().makeTranslation(wallWidth / 2 - rightWidth / 2, wallHeight / 2, 0)
+    );
+    topGeometry.applyMatrix4(
+      new THREE.Matrix4().makeTranslation(0, (doorHeight + (wallHeight - doorHeight) / 2), 0)
+    );
+  
+    // Merge geometries into a single wall
+    return mergeGeometries([leftGeometry, rightGeometry, topGeometry]) as THREE.BufferGeometry;
+  }
+  
+
+  private initWalls(
+    WallSegmentWidth: number,
+    wallWidth: number,
+    wallHeight: number,
+    doorWidth: number,
+    doorHeight: number,
+    doorPositions: { left: number[]; right: number[] }): void {
+    Promise.all([
+      this.loadTexture("/textures/lobby/Ground078_1K-JPG_Color.jpg"),
+      this.loadTexture("/textures/lobby/Ground078_1K-JPG_NormalGL.jpg"),
+      this.loadTexture("/textures/lobby/Ground078_1K-JPG_Roughness.jpg"),
+    ]).then(([brickColor, brickNormal, brickRoughness]) => {
+      [brickColor, brickNormal, brickRoughness].forEach((map) => {
+        map.wrapS = map.wrapT = THREE.RepeatWrapping;
+        map.repeat.set(8, 4);
+      });
+      const wallMaterial = new THREE.MeshStandardMaterial({
+        map: brickColor,
+        normalMap: brickNormal,
+        roughnessMap: brickRoughness,
+        side: THREE.DoubleSide,
+      });
+        // Create walls without doors (front and back)
+        const frontWallGeometry = new THREE.PlaneGeometry(wallWidth, wallHeight);
+        const backWallGeometry = new THREE.PlaneGeometry(wallWidth, wallHeight);
+      
+        // Position them
+        frontWallGeometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, wallHeight / 2, -Lobby.LobbyWidth / 2));
+        backWallGeometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, wallHeight / 2, Lobby.LobbyWidth / 2));
+      
+        // Create left and right walls with doors
+        const leftWallGeometries: THREE.BufferGeometry[] = [];
+        const rightWallGeometries: THREE.BufferGeometry[] = [];
+      
+        for (const pos of doorPositions.left) {
+          leftWallGeometries.push(
+            this.createWallWithDoors(WallSegmentWidth, wallHeight, doorWidth, doorHeight)
+              .applyMatrix4(new THREE.Matrix4().makeTranslation(pos, 0, -Lobby.LobbyLength / 2))
+          );
+        }
+      
+        for (const pos of doorPositions.right) {
+          rightWallGeometries.push(
+            this.createWallWithDoors(WallSegmentWidth, wallHeight, doorWidth, doorHeight)
+              .applyMatrix4(new THREE.Matrix4().makeTranslation(pos, 0, Lobby.LobbyLength / 2))
+          );
+        }
+      
+        // Merge left and right walls
+        const leftWallGeometry = mergeGeometries(leftWallGeometries);
+        leftWallGeometry.applyMatrix4(new THREE.Matrix4().makeRotationY(Math.PI / 2));
+        const rightWallGeometry = mergeGeometries(rightWallGeometries);
+        rightWallGeometry.applyMatrix4(new THREE.Matrix4().makeRotationY(Math.PI / 2));
+      
+        // Create meshes
+        const frontWall = new THREE.Mesh(frontWallGeometry, wallMaterial);
+        const backWall = new THREE.Mesh(backWallGeometry, wallMaterial);
+        const leftWall = new THREE.Mesh(leftWallGeometry, wallMaterial);
+        const rightWall = new THREE.Mesh(rightWallGeometry, wallMaterial);
+      
+        // Add walls to the scene
+        this.scene.add(frontWall, backWall, leftWall, rightWall);
+        this.walls.push(frontWall, backWall, leftWall, rightWall);
+      }
+      
+  )};
+
+//   private initDoors(): void {
+//     this.loader.load("/models/lobby/medieval_door.glb", (gltf) => {
+//       const doorModel = gltf.scene;
+//       doorModel.scale.set(0.06, 0.06, 0.06);
+
+//       const doorPositions = [
+//         { x: Lobby.LobbyLength / 3, z: -Lobby.LobbyWidth / 2 + 3, rotation: 0 },
+//         {
+//           x: -Lobby.LobbyLength / 3,
+//           z: -Lobby.LobbyWidth / 2 + 3,
+//           rotation: 0,
+//         },
+//         {
+//           x: Lobby.LobbyLength / 3,
+//           z: Lobby.LobbyWidth / 2 - 3,
+//           rotation: Math.PI,
+//         },
+//         {
+//           x: -Lobby.LobbyLength / 3,
+//           z: Lobby.LobbyWidth / 2 - 3,
+//           rotation: Math.PI,
+//         },
+//       ];
+
+//       doorPositions.forEach(({ x, z, rotation }) => {
+//         const door = doorModel.clone();
+//         door.position.set(x, 0, z);
+//         door.rotation.y = rotation;
+
+//         // Add properties for raycasting and interaction
+//         door.userData = {
+//           type: "door",
+//           isOpen: false,
+//           initialRotation: rotation,
+//           // Add any other properties you might need for door interaction
+//         };
+
+//         // Make sure the door and all its children are available for raycasting
+//         door.traverse((child) => {
+//           if (child instanceof THREE.Mesh) {
+//             child.userData = {
+//               type: "door",
+//               isOpen: false,
+//               initialRotation: rotation,
+//             };
+//           }
+//         });
+
+//         this.scene.add(door);
+//         this.doors.push(door);
+//       });
+//     });
+//   }
+// }
+
+
+
 
   private initDoors(): void {
     this.loader.load("/models/lobby/medieval_door.glb", (gltf) => {
       const door = gltf.scene;
       door.scale.set(0.06, 0.06, 0.06);
 
-      const doorPositions = [
-        { x: Lobby.LobbyLength / 3, z: -Lobby.LobbyWidth / 2 + 3 },
-        { x: -Lobby.LobbyLength / 3, z: -Lobby.LobbyWidth / 2 + 3 },
-        { x: Lobby.LobbyLength / 3, z: Lobby.LobbyWidth / 2 - 3, rotation: Math.PI },
-        { x: -Lobby.LobbyLength / 3, z: Lobby.LobbyWidth / 2 - 3, rotation: Math.PI },
-      ];
-
-      doorPositions.forEach(({ x, z, rotation }) => {
+      Lobby.DoorPositions.forEach(({ x, z, rotation }) => {
         const newDoor = door.clone();
         newDoor.position.set(x, 0, z);
         if (rotation) newDoor.rotation.y = rotation;
