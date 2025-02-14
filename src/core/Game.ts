@@ -2,6 +2,8 @@ import * as THREE from "three";
 import { Player } from "./Player.ts";
 import { GameControls } from "./Controls.ts";
 import { Lobby } from "../scenes/Lobby.ts";
+import { MusicRoom } from "../scenes/musicRoom/musicRoom.ts";
+// import { PainterRoom } from "../scenes/painterRoom/painterRoom.ts";
 
 type Room = {
   enter: () => void;
@@ -12,7 +14,7 @@ export class Game {
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
   public controls: GameControls;
-  private currentRoom: string;
+  private currentRoom: Lobby | MusicRoom;
   private rooms: Record<string, Room>;
 
   constructor() {
@@ -32,9 +34,18 @@ export class Game {
     this.controls = new GameControls(this.camera, this.renderer.domElement);
 
     // Game state
-    this.currentRoom = "lobby";
-    const lobby = new Lobby(this.scene, this.renderer)
+    // this.currentRoom = "lobby";
+    const lobby = new Lobby(this.scene, this.renderer, this.camera);
+    this.scene.add(lobby.lobbyGroup);
+    const musicRoom = new MusicRoom(this.scene, this.renderer) 
+    this.scene.add(musicRoom.musicGroup);
+    musicRoom.musicGroup.position.copy(new THREE.Vector3(-202, 0, 140.5))
+    // const painterRoom = new PainterRoom(this.scene, this.renderer);
+    // painterRoom.painterGroup.position.copy( new THREE.Vector3(-100, 0, 50))
+    // this.scene.add(painterRoom.painterGroup);
 
+    this.currentRoom = musicRoom;
+    
     this.setupLighting();
     this.setupEventListeners();
 
@@ -45,14 +56,14 @@ export class Game {
     // Camera setup
     this.camera.position.set(0, 2, 0); // Player height
     this.camera.lookAt(0, 2, -14); // Looking at the wall with doors
-    this.camera.position.set(0, 5, 10); // Higher up
-    this.camera.lookAt(0, 0, 0); // Look at the floor
+    this.camera.position.set(0, 25, 10); // Higher up
+    this.camera.lookAt(0, 50, 0); // Look at the floor
 
     this.animate();
   }
 
   private setupLighting(): void {
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.03); // Soft global light
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.05); // Soft global light
     this.scene.add(ambientLight);
   }
 
@@ -67,8 +78,8 @@ export class Game {
 
   private animate(): void {
     requestAnimationFrame(this.animate.bind(this));
-
     this.controls.update();
+    // this.controls.update();
 
     // Update current room (if needed in the future)
     // if (this.rooms[this.currentRoom]) {
