@@ -63,7 +63,7 @@ export class Game {
   }
 
   private setupLighting(): void {
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.05); // Soft global light
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.1); // Soft global light
     this.scene.add(ambientLight);
   }
 
