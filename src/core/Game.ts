@@ -42,9 +42,9 @@ export class Game {
     this.scene.add(musicRoom.musicGroup);
     musicRoom.musicGroup.position.copy(new THREE.Vector3(202, 0, 140.5));
 
-    const painterRoom = new PainterRoom(this.scene, this.renderer);
-    this.scene.add(painterRoom.painterGroup);
-    painterRoom.painterGroup.position.copy( new THREE.Vector3(262, 0, 140.5));
+    // const painterRoom = new PainterRoom(this.scene, this.renderer);
+    // this.scene.add(painterRoom.painterGroup);
+    // painterRoom.painterGroup.position.copy( new THREE.Vector3(262, 0, 140.5));
 
     this.currentRoom = painterRoom;
     
