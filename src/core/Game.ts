@@ -3,7 +3,8 @@ import { Player } from "./Player.ts";
 import { GameControls } from "./Controls.ts";
 import { Lobby } from "../scenes/Lobby.ts";
 import { MusicRoom } from "../scenes/musicRoom/musicRoom.ts";
-// import { PainterRoom } from "../scenes/painterRoom/painterRoom.ts";
+
+import { PainterRoom } from "../scenes/painterRoom/painterRoom.ts";
 
 type Room = {
   enter: () => void;
@@ -14,7 +15,7 @@ export class Game {
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
   public controls: GameControls;
-  private currentRoom: Lobby | MusicRoom;
+  private currentRoom: Lobby | MusicRoom|PainterRoom;
   private rooms: Record<string, Room>;
 
   constructor() {
@@ -39,12 +40,13 @@ export class Game {
     this.scene.add(lobby.lobbyGroup);
     const musicRoom = new MusicRoom(this.scene, this.renderer) 
     this.scene.add(musicRoom.musicGroup);
-    musicRoom.musicGroup.position.copy(new THREE.Vector3(-202, 0, 140.5))
-    // const painterRoom = new PainterRoom(this.scene, this.renderer);
-    // painterRoom.painterGroup.position.copy( new THREE.Vector3(-100, 0, 50))
-    // this.scene.add(painterRoom.painterGroup);
+    musicRoom.musicGroup.position.copy(new THREE.Vector3(202, 0, 140.5));
 
-    this.currentRoom = musicRoom;
+    const painterRoom = new PainterRoom(this.scene, this.renderer);
+    this.scene.add(painterRoom.painterGroup);
+    painterRoom.painterGroup.position.copy( new THREE.Vector3(262, 0, 140.5));
+
+    this.currentRoom = painterRoom;
     
     this.setupLighting();
     this.setupEventListeners();
