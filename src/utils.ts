@@ -87,7 +87,7 @@ export function createWallWithDoorInRightCorner(
     ]) as THREE.BufferGeometry;
 }
 
-export function createWallWithDoorInLefttCorner(
+export function createWallWithDoorInLeftCorner(
     wallWidth: number,
     wallHeight: number,
     doorWidth: number,
