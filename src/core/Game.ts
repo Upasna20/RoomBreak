@@ -1,9 +1,12 @@
 import * as THREE from "three";
+// import { Player } from "./Player.ts";
 import { GameControls } from "./Controls.ts";
 import { Lobby } from "../scenes/Lobby.ts";
 import { MusicRoom } from "../scenes/musicRoom/musicRoom.ts";
 import { LiteraryRoom } from "../scenes/literaryRoom.ts";
-import { DirectionalLightHelper } from "three";
+// import { DirectionalLightHelper } from "three";
+
+import { PainterRoom } from "../scenes/painterRoom/painterRoom.ts";
 
 type Room = {
   enter: () => void;
@@ -14,7 +17,7 @@ export class Game {
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
   public controls: GameControls;
-  private currentRoom: Lobby | MusicRoom;
+  private currentRoom: Lobby | MusicRoom| PainterRoom | LiteraryRoom;
   private rooms: Record<string, Room>;
 
   constructor() {
@@ -47,13 +50,17 @@ export class Game {
 
     literaryRoom.literaryGroup.rotateY(Math.PI / 2);  // 90 degrees in radians
 
-    this.currentRoom = musicRoom;
+    const painterRoom = new PainterRoom(this.scene, this.renderer);
+    this.scene.add(painterRoom.painterGroup);
+    painterRoom.painterGroup.position.copy( new THREE.Vector3(202, 0, 140.5));
+
+    // this.currentRoom = painterRoom;
     
     this.setupLighting();
     this.setupEventListeners();
 
     // Renderer settings
-    // this.renderer.physicallyCorrectLights = true;
+    this.renderer.physicallyCorrectLights = true;
     this.scene.background = new THREE.Color(0x202020); // Dark gray
 
     // Camera setup
@@ -91,7 +98,6 @@ export class Game {
     // this.scene.add(lightHelper);
   }
 
-
   private setupEventListeners(): void {
     window.addEventListener("resize", () => {
       this.camera.aspect = window.innerWidth / window.innerHeight;
@@ -113,6 +119,5 @@ export class Game {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.render(this.scene, this.camera);
-
   }
 }
