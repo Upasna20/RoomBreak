@@ -1,13 +1,17 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { createWallWithDoorInRightCorner } from "../../utils";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module";
 
 export class PainterRoom{
     private renderer: THREE.WebGLRenderer;
     private scene: THREE.Scene;
     private clickableModels: THREE.Object3D[] = [];
     private loader = new GLTFLoader();
+    private dracoLoader= new DRACOLoader();
+    
     public painterGroup: THREE.Group;
     static DoorWidth: number = 19;
     static DoorHeight: number = 45;
@@ -19,6 +23,9 @@ export class PainterRoom{
         this.renderer = renderer;
         this.scene = scene;
         this.painterGroup = new THREE.Group();
+        this.dracoLoader.setDecoderPath('/draco/');
+        this.loader.setDRACOLoader(this.dracoLoader);
+        this.loader.setMeshoptDecoder(MeshoptDecoder);
         this.init();
     }
 
@@ -114,31 +121,31 @@ export class PainterRoom{
     
     private async loadModels() {
         const modelData = [
-            { path: "models/painterRoom/electric_guitar_lowpoly_model.glb", scale: [6, 6, 6], position: [-20, 30, 100], rotation: [0, Math.PI, 3 * Math.PI / 8], name: "red_guitar" },
-            { path: "models/painterRoom/table.glb",scale : [30,30,30],position: [80,0,80],name: "table"},
-            { path: "models/painterRoom/my_desk.glb",scale : [32,32,32],position: [86,30,10],rotation : [0,3*Math.PI/2,0],name:"mydesk" },
-            { path: "models/painterRoom/paintcan.glb",scale : [4,4,4],position: [40,0,0],rotation : [0,0,0],name:"paintcan" },
-            { path: "models/painterRoom/colorspot.glb",scale : [2000,2000,2000],position: [40,0,0],name: "colorspot"},
-            { path: "models/painterRoom/caterpillar.glb",scale : [80,80,80],position: [-90,48,90],name: "caterpillar"},
-            { path: "models/painterRoom/Lantern.glb",scale : [2,2,2],position: [-90,0,90],name:"lantern" },
-            { path: "models/painterRoom/canvas.glb",scale : [20,20,20],position: [-90,40,60],name:"canvas" },
-            { path: "models/painterRoom/collage_wall.glb",scale : [80,80,80],position: [0,50,94],rotation : [-Math.PI/2,0,0],name:"collage_wall" },
-            { path: "models/painterRoom/GlamVelvetSofa.glb",scale : [40,40,40],position: [0,0,80],rotation : [0,Math.PI,0],name:"glam_sofa" },
-            { path: "models/painterRoom/colorpens.glb",scale : [80,80,80],position: [-40,6,20],rotation : [Math.PI,0,0],name:"colorpens" },
-            { path: "models/painterRoom/markers.glb",scale : [6,6,6],position: [-40,6,20],rotation : [Math.PI/2,0,0],name:"markers" },
-            { path: "models/painterRoom/papers.glb",scale : [0.2,0.2,0.2],position: [0,6,0],rotation : [3*Math.PI/2,0,0],name:"papers" },
-            { path: "models/painterRoom/paintbrush.glb",scale : [80,80,80],position: [-40,6,40],rotation : [Math.PI/2,0,0],name: "paintbrush"},
-            { path: "models/painterRoom/color palette.glb",scale : [2,2,2],position: [-20,8,0],rotation : [Math.PI/16,0,0],name: "color_palette"},
-            { path: "models/painterRoom/pencilcase.glb",scale : [3,3,3],position: [60,26,80],rotation : [0,Math.PI,0],name:"pencilcase" },
-            { path: "models/painterRoom/cup_with_pencils.glb",scale : [60,60,60],position: [66,26,76],rotation : [0,Math.PI,0],name: "cup_pencils"},
-            { path: "models/painterRoom/pencil_case_model.glb",scale : [0.6,0.6,0.6],position: [60,26,60],rotation : [0,Math.PI,0],name: "pencil_cups" },
-            { path: "models/painterRoom/old_key.glb",scale : [40, 40, 40],position: [60, 30, 80],rotation : [0,Math.PI/4,0],name:"old_key" },
-            { path: "models/painterRoom/GlassBrokenWindow.glb",scale : [40, 40, 40],position: [60, 30, -90],name:"glass_window" },
-            { path: "models/painterRoom/painting2.glb",scale : [6,6, 6],position: [-60, 60, -94],name: "painting2"},
-            { path: "models/painterRoom/painting3.glb",scale : [0.2,0.2, 0.2],position: [-90, 60, 0],rotation : [0,Math.PI/2,0],name: "paintin3"},
-            { path: "models/painterRoom/rainbow.glb",scale : [0.1,0.1, 0.1],position: [-140, 140, -40],rotation : [0,Math.PI/2,0],name: "rainbow"},
-            { path: "models/painterRoom/painting.glb",scale : [20,20, 20],position: [-60, 0, 0],rotation : [0,Math.PI/4,0],name: "painting"},
-            { path: "models/painterRoom/SheenWoodLeatherSofa.glb",scale : [40,40, 40],position: [-20, 0, -84],name: "sheenwood"},
+            // { path: "models/painterRoom/electric_guitar_lowpoly_model.glb", scale: [6, 6, 6], position: [-20, 30, 100], rotation: [0, Math.PI, 3 * Math.PI / 8], name: "red_guitar" },
+            { path: "models/painterRoom/table_c.glb",scale : [30,30,30],position: [80,0,80],name: "table"},
+            { path: "models/painterRoom/my_desk_c.glb",scale : [32,32,32],position: [86,30,10],rotation : [0,3*Math.PI/2,0],name:"mydesk" },
+            // { path: "models/painterRoom/paintcan_c.glb",scale : [4,4,4],position: [40,0,0],rotation : [0,0,0],name:"paintcan" },
+            { path: "models/painterRoom/colorspot_c.glb",scale : [2000,2000,2000],position: [40,0,0],name: "colorspot"},
+            // { path: "models/painterRoom/caterpillar_c.glb",scale : [80,80,80],position: [-90,48,90],name: "caterpillar"},
+            // { path: "models/painterRoom/Lantern_c.glb",scale : [2,2,2],position: [-90,0,90],name:"lantern" },
+            { path: "models/painterRoom/canvas_c.glb",scale : [30,30,30],position: [-150,40,60],name:"canvas" },
+            { path: "models/painterRoom/collage_wall_c.glb",scale : [80,80,80],position: [0,50,94],rotation : [-Math.PI/2,0,0],name:"collage_wall" },
+            // { path: "models/painterRoom/GlamVelvetSofa_c.glb",scale : [40,40,40],position: [0,0,80],rotation : [0,Math.PI,0],name:"glam_sofa" },
+            // { path: "models/painterRoom/colorpens_c.glb",scale : [80,80,80],position: [-40,6,20],rotation : [Math.PI,0,0],name:"colorpens" },
+            // { path: "models/painterRoom/markers_c.glb",scale : [6,6,6],position: [-40,6,20],rotation : [Math.PI/2,0,0],name:"markers" },
+            // { path: "models/painterRoom/papers_c.glb",scale : [0.2,0.2,0.2],position: [0,6,0],rotation : [3*Math.PI/2,0,0],name:"papers" },
+            // { path: "models/painterRoom/paintbrush_c.glb",scale : [80,80,80],position: [-40,6,40],rotation : [Math.PI/2,0,0],name: "paintbrush"},
+            // { path: "models/painterRoom/color palette.glb",scale : [2,2,2],position: [-20,8,0],rotation : [Math.PI/16,0,0],name: "color_palette"},
+            // { path: "models/painterRoom/pencilcase_c.glb",scale : [3,3,3],position: [60,26,80],rotation : [0,Math.PI,0],name:"pencilcase" },
+            // { path: "models/painterRoom/cup_with_pencils_c.glb",scale : [60,60,60],position: [66,26,76],rotation : [0,Math.PI,0],name: "cup_pencils"},
+            { path: "models/painterRoom/pencil_case_model_c.glb",scale : [0.6,0.6,0.6],position: [60,26,60],rotation : [0,Math.PI,0],name: "pencil_cups" },
+            // { path: "models/painterRoom/old_key_c.glb",scale : [40, 40, 40],position: [60, 30, 80],rotation : [0,Math.PI/4,0],name:"old_key" },
+            // { path: "models/painterRoom/GlassBrokenWindow_c.glb",scale : [40, 40, 40],position: [60, 30, -90],name:"glass_window" },
+            // { path: "models/painterRoom/painting2_c.glb",scale : [6,6, 6],position: [-60, 60, -94],name: "painting2"},
+            // { path: "models/painterRoom/painting3_c.glb",scale : [0.2,0.2, 0.2],position: [-90, 60, 0],rotation : [0,Math.PI/2,0],name: "paintin3"},
+            // { path: "models/painterRoom/rainbow_c.glb",scale : [0.1,0.1, 0.1],position: [-140, 140, -40],rotation : [0,Math.PI/2,0],name: "rainbow"},
+            { path: "models/painterRoom/painting_c.glb",scale : [20,20, 20],position: [30, 0, -50],rotation : [0,0,0],name: "painting"}
+            // { path: "models/painterRoom/sheen_c.glb",scale : [40,40, 40],position: [-20, 0, -84],name: "sheenwood"},
           ];
 
 
