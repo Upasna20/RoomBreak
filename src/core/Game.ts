@@ -15,7 +15,7 @@ export class Game {
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
   public controls: GameControls;
-  private currentRoom: Lobby | MusicRoom|PainterRoom;
+  private currentRoom: Lobby | MusicRoom| PainterRoom;
   private rooms: Record<string, Room>;
 
   constructor() {
@@ -46,7 +46,7 @@ export class Game {
     this.scene.add(painterRoom.painterGroup);
     painterRoom.painterGroup.position.copy( new THREE.Vector3(202, 0, 140.5));
 
-    this.currentRoom = lobby;
+    // this.currentRoom = painterRoom;
     
     this.setupLighting();
     this.setupEventListeners();
