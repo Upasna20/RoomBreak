@@ -1,5 +1,8 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { Lobby } from "./scenes/Lobby";
+import { PainterRoom } from "./scenes/painterRoom/painterRoom";
+import { MusicRoom } from "./scenes/musicRoom/musicRoom";
 
 export function createWallWithDoorInCenter(
     wallWidth: number,
@@ -11,11 +14,12 @@ export function createWallWithDoorInCenter(
     const rightWidth = wallWidth / 2 - doorWidth / 2;
 
     // Create individual geometries
-    const leftGeometry = new THREE.PlaneGeometry(leftWidth, wallHeight);
-    const rightGeometry = new THREE.PlaneGeometry(rightWidth, wallHeight);
-    const topGeometry = new THREE.PlaneGeometry(
+    const leftGeometry = new THREE.BoxGeometry(leftWidth, wallHeight, Lobby.WallThickness);
+    const rightGeometry = new THREE.BoxGeometry(rightWidth, wallHeight, Lobby.WallThickness);
+    const topGeometry = new THREE.BoxGeometry(
         wallWidth,
-        wallHeight - doorHeight
+        wallHeight - doorHeight,
+        Lobby.WallThickness
     );
 
     // Apply transformations
@@ -58,10 +62,11 @@ export function createWallWithDoorInRightCorner(
     const leftWidth = wallWidth - doorWidth;
 
     // Create individual geometries
-    const leftGeometry = new THREE.PlaneGeometry(leftWidth, wallHeight);
-    const topGeometry = new THREE.PlaneGeometry(
+    const leftGeometry = new THREE.BoxGeometry(leftWidth, wallHeight, Lobby.WallThickness);
+    const topGeometry = new THREE.BoxGeometry(
         wallWidth,
-        wallHeight - doorHeight
+        wallHeight - doorHeight,
+        Lobby.WallThickness
     );
 
     // Apply transformations
@@ -96,10 +101,11 @@ export function createWallWithDoorInLeftCorner(
     const rightWidth = wallWidth - doorWidth;
 
     // Create individual geometries
-    const rightGeometry = new THREE.PlaneGeometry(rightWidth, wallHeight);
-    const topGeometry = new THREE.PlaneGeometry(
+    const rightGeometry = new THREE.BoxGeometry(rightWidth, wallHeight, Lobby.WallThickness);
+    const topGeometry = new THREE.BoxGeometry(
         wallWidth,
-        wallHeight - doorHeight
+        wallHeight - doorHeight,
+        Lobby.WallThickness
     );
 
     // Apply transformations

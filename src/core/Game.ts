@@ -7,10 +7,9 @@ import { LiteraryRoom } from "../scenes/literaryRoom.ts";
 // import { DirectionalLightHelper } from "three";
 
 import { PainterRoom } from "../scenes/painterRoom/painterRoom.ts";
+import { Player } from "./Player.ts";
 
-type Room = {
-  enter: () => void;
-};
+export type Room = Lobby | MusicRoom | PainterRoom | LiteraryRoom;
 
 export class Game {
   private scene: THREE.Scene;
@@ -19,6 +18,7 @@ export class Game {
   public controls: GameControls;
   private currentRoom: Lobby | MusicRoom| PainterRoom | LiteraryRoom;
   private rooms: Record<string, Room>;
+  public player: Player;
 
   constructor() {
     this.scene = new THREE.Scene();
@@ -32,6 +32,9 @@ export class Game {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = true;
     document.body.appendChild(this.renderer.domElement);
+    this.player = new Player(this.camera);
+    this.scene.add(this.player.object);
+
 
     // Initialize core components
     this.controls = new GameControls(this.camera, this.renderer.domElement);
@@ -40,7 +43,7 @@ export class Game {
     // this.currentRoom = "lobby";
     const lobby = new Lobby(this.scene, this.renderer, this.camera);
     this.scene.add(lobby.lobbyGroup);
-    const musicRoom = new MusicRoom(this.scene, this.renderer) 
+    const musicRoom = new MusicRoom(this.scene, this.renderer)
     this.scene.add(musicRoom.musicGroup);
     musicRoom.musicGroup.position.copy(new THREE.Vector3(-202, 0, 140.5))
 
@@ -52,25 +55,85 @@ export class Game {
 
     const painterRoom = new PainterRoom(this.scene, this.renderer);
     this.scene.add(painterRoom.painterGroup);
-    painterRoom.painterGroup.position.copy( new THREE.Vector3(202, 0, 140.5));
+    painterRoom.painterGroup.position.copy(new THREE.Vector3(202, 0, 140.5));
 
-    // this.currentRoom = painterRoom;
-    
+    this.currentRoom = lobby;
+
     this.setupLighting();
-    this.setupEventListeners();
-
-    // Renderer settings
-    this.renderer.physicallyCorrectLights = true;
     this.scene.background = new THREE.Color(0x202020); // Dark gray
+    // camera settings
+    this.camera.position.set(0, 20, 0); // Higher up
+    this.camera.lookAt(0, 2, -14); // Look at the floor
 
-    // Camera setup
-    this.camera.position.set(0, 2, 0); // Player height
-    this.camera.lookAt(0, 2, -14); // Looking at the wall with doors
-    this.camera.position.set(0, 25, 10); // Higher up
-    this.camera.lookAt(0, 50, 0); // Look at the floor
-
-    this.animate();
+    this.loadScenes().then(() => {
+      this.animate();
+    });
   }
+
+  private async loadScenes(): Promise<void> {
+    const lobby = new Lobby(this.scene, this.renderer, this.camera);
+    this.scene.add(lobby.lobbyGroup);
+    
+    const musicRoom = new MusicRoom(this.scene, this.renderer);
+    this.scene.add(musicRoom.musicGroup);
+    musicRoom.musicGroup.position.copy(new THREE.Vector3(-202, 0, 140.5));
+
+    const painterRoom = new PainterRoom(this.scene, this.renderer);
+    this.scene.add(painterRoom.painterGroup);
+    painterRoom.painterGroup.position.copy(new THREE.Vector3(202, 0, 140.5));
+
+    this.rooms = {
+      "lobby": lobby,
+      "musicRoom": musicRoom,
+      "painterRoom": painterRoom,
+    };
+
+    this.currentRoom = lobby;
+  }
+
+  private static readonly LOBBY_BOUNDS = {
+    minX: -100,
+    maxX: 100,
+    minZ: -100,
+    maxZ: 100,
+  };
+
+  private static readonly ROOM_BOUNDS = [
+    { minX: -300, maxX: -100, minZ: 50, maxZ: 236, room: "musicRoom" },
+    { minX: 100, maxX: 300, minZ: 50, maxZ: 236, room: "painterRoom" },
+    // { minX: 100, maxX: 200, minZ: 25, maxZ: 75, room: "MusicRoom" },
+    // { minX: -200, maxX: -100, minZ: 25, maxZ: 75, room: "PainterRoom" },
+  ];
+
+  private updateCurrentRoom(): void {
+    const { x, z } = this.player.object.position;
+
+    if (
+      x >= Game.LOBBY_BOUNDS.minX &&
+      x <= Game.LOBBY_BOUNDS.maxX &&
+      z >= Game.LOBBY_BOUNDS.minZ &&
+      z <= Game.LOBBY_BOUNDS.maxZ
+    ) {
+      if (!(this.currentRoom instanceof Lobby)) {
+        // console.log(`current list of boundingboxes: ${this.currentRoom.boundingBoxes} and length is ${this.currentRoom.boundingBoxes.length}`)
+        this.currentRoom = this.rooms["lobby"] as Lobby;
+      }
+      return;
+    }
+
+    for (const bounds of Game.ROOM_BOUNDS) {
+      // console.log(`Player's position(${x}, ${z})`);
+      if (x >= bounds.minX && x <= bounds.maxX && z >= bounds.minZ && z <= bounds.maxZ) {
+        if (this.currentRoom !== this.rooms[bounds.room]) {
+          // console.log(`current list of boundingboxes: ${this.currentRoom.boundingBoxes} and length is ${this.currentRoom.boundingBoxes.length}`)
+          this.currentRoom = this.rooms[bounds.room] as Room;
+        }
+        return;
+      }
+    }
+  }
+
+ 
 
   private setupLighting(): void {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.1); // Soft global light
@@ -98,26 +161,16 @@ export class Game {
     // this.scene.add(lightHelper);
   }
 
-  private setupEventListeners(): void {
-    window.addEventListener("resize", () => {
-      this.camera.aspect = window.innerWidth / window.innerHeight;
-      this.camera.updateProjectionMatrix();
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-  }
-
 
   private animate(): void {
     requestAnimationFrame(this.animate.bind(this));
     this.controls.update();
-    // this.controls.update();
 
-    // Update current room (if needed in the future)
-    // if (this.rooms[this.currentRoom]) {
-    //   this.rooms[this.currentRoom].update();
-    // }
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.updateCurrentRoom();
+    this.player.update(this.currentRoom);   // Updates player's position based on camera
+
     this.renderer.render(this.scene, this.camera);
   }
 }

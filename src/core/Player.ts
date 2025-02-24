@@ -1,36 +1,68 @@
-import * as THREE from 'three';
-
+import * as THREE from "three";
+import type {Room} from "../core/Game"
 export class Player {
-    private camera: THREE.Camera;
-    private height: number;
-    private speed: number;
-    private position: THREE.Vector3;
-    private velocity: THREE.Vector3;
+  public object: THREE.Mesh; // Player object
+  public boundingBox: THREE.Box3; // Bounding box for collision
+  private camera: THREE.Camera; // Reference to the camera
 
-    constructor(camera: THREE.Camera) {
-        this.camera = camera;
-        this.height = 1.8;
-        this.speed = 0.1;
-        this.position = new THREE.Vector3(0, this.height, 5);
-        this.velocity = new THREE.Vector3();
+  constructor(camera: THREE.Camera) {
+    this.camera = camera;
 
-        this.camera.position.set(
-            this.position.x,
-            this.position.y,
-            this.position.z
-        );
+    // Create a simple box to represent the player
+    const geometry = new THREE.BoxGeometry(1, 4, 1);
+    const material = new THREE.MeshBasicMaterial({ color: 0xDAF7A6 });
+    this.object = new THREE.Mesh(geometry, material);
+
+    // Start player at the same position as the camera
+    this.object.position.copy(this.camera.position);
+
+    // Create a bounding box
+    this.boundingBox = new THREE.Box3().setFromObject(this.object);
+  }
+
+  update(room: Room): void {
+    const prevPlayerPos = this.object.position.clone();
+    this.syncPositionWithCamera();
+    this.boundingBox.setFromObject(this.object);
+
+    for (const {box, object} of room.boundingBoxes) {
+        if (this.boundingBox.intersectsBox(box)) {
+            console.log(`Collision with room ${room}, and the box ${box}`);
+            console.log(`current list of boundingboxes: ${room.boundingBoxes} and length is ${room.boundingBoxes.length}`)
+            this.resetPosition(prevPlayerPos);
+            return;
+        }
     }
+}
 
-    public update(): void {
-        // Update player position and camera
-        this.position.add(this.velocity);
-        this.camera.position.copy(this.position);
+private syncPositionWithCamera(): void {
+    this.object.position.set(
+        this.camera.position.x,
+        this.camera.position.y, // Adjust Y for player height
+        this.camera.position.z
+    );
+}
 
-        // Reset velocity
-        this.velocity.multiplyScalar(0.9);
-    }
+// private handleDoorCollision(object: THREE.Object3D): void {
+//     console.log("Player collided with a door. Opening...");
+//     console.log("the object is", object)
+//     console.log("let's see animations length", object.animations.length);
 
-    public move(direction: THREE.Vector3): void {
-        this.velocity.add(direction.multiplyScalar(this.speed));
-    }
+//     if (object.animations.length > 0) {
+//         console.log("Okay Some animation works!!")
+//         const mixer = new THREE.AnimationMixer(object);
+//         const clip = object.animations[0]; // Assuming first animation is door opening
+//         const action = mixer.clipAction(clip);
+//         action.setLoop(THREE.LoopOnce, 1);
+//         action.clampWhenFinished = true;
+//         action.play();
+//     }
+// }
+
+private resetPosition(prevPlayerPos: THREE.Vector3): void {
+    this.object.position.copy(prevPlayerPos);
+    this.camera.position.copy(prevPlayerPos);
+    this.boundingBox.setFromObject(this.object);
+}
+
 }

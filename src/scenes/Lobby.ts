@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import { createWallWithDoorInCenter} from "../utils";
+import { createWallWithDoorInCenter } from "../utils";
+import { createLobbyBoundingBoxes } from "../core/Collision";
 
 export class Lobby {
   static LobbyLength: number = 200;
@@ -10,12 +11,18 @@ export class Lobby {
   static DoorWidth: number = 19;
   static DoorHeight: number = 45;
   static WallPanelWidth: number = 100;
+  static WallThickness: number = 2;
   static DoorPositions = [
     { x: Lobby.LobbyLength / 2 - 3, z: -50, rotation: -Math.PI / 2 },
     { x: -Lobby.LobbyLength / 2 + 3, z: -50, rotation: Math.PI / 2 },
     { x: Lobby.LobbyLength / 2 - 3, z: 50, rotation: -Math.PI / 2 },
     { x: -Lobby.LobbyLength / 2 + 3, z: 50, rotation: Math.PI / 2 },
   ];
+  static doorGaps = {
+    left: { zStart: -Lobby.LobbyLength / 2 + 40, zEnd: -Lobby.LobbyLength / 2 + 60 },
+    right: { zStart: -Lobby.LobbyLength / 2 + 140, zEnd: -Lobby.LobbyLength / 2 + 160 }
+  };
+
 
   private scene: THREE.Scene;
   private renderer: THREE.WebGLRenderer;
@@ -25,6 +32,8 @@ export class Lobby {
   private raycaster: THREE.Raycaster;
   private camera: THREE.PerspectiveCamera;
   public lobbyGroup: THREE.Group;
+
+  public boundingBoxes: { box: THREE.Box3, object?: THREE.Object3D, pos?: string }[] = [];
 
 
   constructor(
@@ -38,8 +47,12 @@ export class Lobby {
     this.raycaster = new THREE.Raycaster();
     this.camera = camera;
     this.lobbyGroup = new THREE.Group();
-    this.initFloor();
-    this.initWalls(
+    this.init();
+  }
+
+  private async init() {
+    await this.initFloor();
+    await this.initWalls(
       Lobby.WallPanelWidth,
       Lobby.LobbyLength,
       Lobby.CeilingHeight,
@@ -48,18 +61,18 @@ export class Lobby {
       { left: [-50, 50], right: [-50, 50] }
     );
     this.initCeiling();
-    this.initLights();
-    this.initDoors();
-    // this.scene.add(this.lobbyGroup);
-    // this.addOutsideLight();
-    // this.attachLightToCamera(camera);
+    await this.initLights();
+    // await this.initDoors();
+    createLobbyBoundingBoxes(this);
+    this.onAssetsLoaded();
   }
 
-  
-
-  getWalls(): THREE.Mesh[] {
-    return this.walls;
+  private onAssetsLoaded() {
+    console.log("Lobby Loaded!!")
+    // Additional initialization that depends on assets being loaded can go here
   }
+
+
   private attachLightToCamera(camera: THREE.PerspectiveCamera): void {
     const cameraLight = new THREE.PointLight(0xffffff, 5, 500); // Bright white light
     cameraLight.position.set(0, 0, 0); // Start at the camera's position
@@ -119,32 +132,35 @@ export class Lobby {
     });
   }
 
-  private initFloor(): void {
+  private async initFloor(): Promise<void> {
     const floorGeometry = new THREE.PlaneGeometry(
       Lobby.LobbyLength,
       Lobby.LobbyWidth
     );
 
-    Promise.all([
-      this.loadTexture("/textures/lobby/Fabric029_1K-JPG_Color.jpg"),
-      this.loadTexture("/textures/lobby/Fabric029_1K-JPG_NormalGL.jpg"),
-      this.loadTexture("/textures/lobby/Fabric029_1K-JPG_Roughness.jpg"),
-    ]).then(([colorMap, normalMap, roughnessMap]) => {
-      [colorMap, normalMap, roughnessMap].forEach((map) => {
-        map.wrapS = map.wrapT = THREE.RepeatWrapping;
-        map.repeat.set(20, 20);
-      });
+    return new Promise<void>((resolve) => {
+      Promise.all([
+        this.loadTexture("/textures/lobby/Fabric029_1K-JPG_Color.jpg"),
+        this.loadTexture("/textures/lobby/Fabric029_1K-JPG_NormalGL.jpg"),
+        this.loadTexture("/textures/lobby/Fabric029_1K-JPG_Roughness.jpg"),
+      ]).then(([colorMap, normalMap, roughnessMap]) => {
+        [colorMap, normalMap, roughnessMap].forEach((map) => {
+          map.wrapS = map.wrapT = THREE.RepeatWrapping;
+          map.repeat.set(20, 20);
+        });
 
-      const floorMaterial = new THREE.MeshStandardMaterial({
-        map: colorMap,
-        normalMap: normalMap,
-        roughnessMap: roughnessMap,
-      });
+        const floorMaterial = new THREE.MeshStandardMaterial({
+          map: colorMap,
+          normalMap: normalMap,
+          roughnessMap: roughnessMap,
+        });
 
-      const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-      floor.rotation.x = -Math.PI / 2;
-      floor.receiveShadow = false;
-      this.lobbyGroup.add(floor);
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = false;
+        this.lobbyGroup.add(floor);
+        resolve();
+      });
     });
   }
 
@@ -162,186 +178,206 @@ export class Lobby {
     this.lobbyGroup.add(ceiling);
   }
 
-  private initLights(): void {
-    this.loader.load("/models/lobby/torch_stick.glb", (gltf) => {
-      const torchModel = gltf.scene;
-      torchModel.scale.set(30, 30, 30);
+  private async initLights(): Promise<void> {
+    const loadTorches = new Promise<void>((resolve) => {
+      this.loader.load("/models/lobby/torch_stick.glb", (gltf) => {
+        const torchModel = gltf.scene;
+        torchModel.name = "TorchLight";
+        torchModel.scale.set(30, 30, 30);
 
-      const torchPositions = [
-        { x: Lobby.LobbyLength / 2 - 5, y: 0, z: Lobby.LobbyWidth / 2 - 5 },
-        { x: -Lobby.LobbyLength / 2 + 5, y: 0, z: Lobby.LobbyWidth / 2 - 5 },
-        { x: Lobby.LobbyLength / 2 - 5, y: 0, z: -Lobby.LobbyWidth / 2 + 5 },
-        { x: -Lobby.LobbyLength / 2 + 5, y: 0, z: -Lobby.LobbyWidth / 2 + 5 },
-      ];
+        const torchPositions = [
+          { x: Lobby.LobbyLength / 2 - 5, y: 0, z: Lobby.LobbyWidth / 2 - 7 },
+          { x: -Lobby.LobbyLength / 2 + 5, y: 0, z: Lobby.LobbyWidth / 2 - 7 },
+          { x: Lobby.LobbyLength / 2 - 5, y: 0, z: -Lobby.LobbyWidth / 2 + 7 },
+          { x: -Lobby.LobbyLength / 2 + 5, y: 0, z: -Lobby.LobbyWidth / 2 + 7 },
+        ];
 
-      torchPositions.forEach((pos) => {
-        const torch = torchModel.clone();
-        torch.position.set(pos.x, pos.y, pos.z);
-        this.scene.add(torch);
+        torchPositions.forEach((pos) => {
+          const torch = torchModel.clone();
+          torch.position.set(pos.x, pos.y, pos.z);
+          this.scene.add(torch);
 
-        const flamePosition = new THREE.Vector3(pos.x, pos.y + 43.5, pos.z);
-        const light = new THREE.PointLight(0xffa500, 500, 40);
-        light.position.copy(flamePosition);
-        light.castShadow = false;
-        this.lobbyGroup.add(light);
+          const flamePosition = new THREE.Vector3(pos.x, pos.y + 43.5, pos.z);
+          const light = new THREE.PointLight(0xffa500, 500, 40);
+          light.position.copy(flamePosition);
+          light.castShadow = false;
+          this.lobbyGroup.add(light);
+        });
+        resolve();
       });
     });
-    // Load and place wall lamps (unchanged)
-    this.loader.load("/models/lobby/low_poly_psx_wall_lamp.glb", (gltf) => {
-      const model = gltf.scene;
-      model.scale.set(30, 30, 30);
 
-      const lampPositions = [
-        {
-          x: 0,
-          y: (2 * Lobby.CeilingHeight) / 3,
-          z: -Lobby.LobbyWidth / 2,
-          rotation: 0,
-        }, // Back Wall
-        {
-          x: 0,
-          y: (2 * Lobby.CeilingHeight) / 3,
-          z: Lobby.LobbyWidth / 2,
-          rotation: Math.PI,
-        }, // Front Wall
-        {
-          x: -Lobby.LobbyLength / 2,
-          y: (2 * Lobby.CeilingHeight) / 3,
-          z: 0,
-          rotation: Math.PI / 2,
-        }, // Left Wall
-        {
-          x: Lobby.LobbyLength / 2,
-          y: (2 * Lobby.CeilingHeight) / 3,
-          z: 0,
-          rotation: -Math.PI / 2,
-        }, // Right Wall
-      ];
+    const loadWallLamps = new Promise<void>((resolve) => {
+      this.loader.load("/models/lobby/low_poly_psx_wall_lamp.glb", (gltf) => {
+        const model = gltf.scene;
+        model.name = "WallLamp";
+        model.scale.set(30, 30, 30);
 
-      lampPositions.forEach((pos) => {
-        const lamp = model.clone();
-        lamp.position.set(pos.x, pos.y, pos.z);
-        lamp.rotation.y = pos.rotation;
+        const lampPositions = [
+          {
+            x: 0,
+            y: (2 * Lobby.CeilingHeight) / 3,
+            z: -Lobby.LobbyWidth / 2 + 7,
+            rotation: 0,
+          }, // Back Wall
+          {
+            x: 0,
+            y: (2 * Lobby.CeilingHeight) / 3,
+            z: Lobby.LobbyWidth / 2 - 7,
+            rotation: Math.PI,
+          }, // Front Wall
+          {
+            x: -Lobby.LobbyLength / 2 + 7,
+            y: (2 * Lobby.CeilingHeight) / 3,
+            z: 0,
+            rotation: Math.PI / 2,
+          }, // Left Wall
+          {
+            x: Lobby.LobbyLength / 2 - 7,
+            y: (2 * Lobby.CeilingHeight) / 3,
+            z: 0,
+            rotation: -Math.PI / 2,
+          }, // Right Wall
+        ];
 
-        const light = new THREE.PointLight(0xffa500, 500, 80);
-        light.position.set(pos.x, pos.y, pos.z);
-        light.castShadow = false;
-        light.shadow.mapSize.set(1024, 1024);
-        light.shadow.bias = -0.005;
+        lampPositions.forEach((pos) => {
+          const lamp = model.clone();
+          lamp.position.set(pos.x, pos.y, pos.z);
+          lamp.rotation.y = pos.rotation;
 
-        this.lobbyGroup.add(light);
-        this.lobbyGroup.add(lamp);
+          const light = new THREE.PointLight(0xffa500, 500, 80);
+          light.position.set(pos.x, pos.y, pos.z);
+          light.castShadow = false;
+          light.shadow.mapSize.set(1024, 1024);
+          light.shadow.bias = -0.005;
+
+          this.lobbyGroup.add(light);
+          this.lobbyGroup.add(lamp);
+        });
+        resolve();
       });
     });
+
+    await Promise.all([loadTorches, loadWallLamps]);
   }
 
-  private initWalls(
+  private async initWalls(
     WallSegmentWidth: number,
     wallWidth: number,
     wallHeight: number,
     doorWidth: number,
     doorHeight: number,
     doorPositions: { left: number[]; right: number[] }
-  ): void {
-    Promise.all([
-      this.loadTexture("/textures/lobby/Ground078_1K-JPG_Color.jpg"),
-      this.loadTexture("/textures/lobby/Ground078_1K-JPG_NormalGL.jpg"),
-      this.loadTexture("/textures/lobby/Ground078_1K-JPG_Roughness.jpg"),
-    ]).then(([brickColor, brickNormal, brickRoughness]) => {
-      [brickColor, brickNormal, brickRoughness].forEach((map) => {
-        map.wrapS = map.wrapT = THREE.RepeatWrapping;
-        map.repeat.set(8, 4);
-      });
-      const wallMaterial = new THREE.MeshStandardMaterial({
-        map: brickColor,
-        normalMap: brickNormal,
-        roughnessMap: brickRoughness,
-        side: THREE.DoubleSide,
-      });
-      // Create walls without doors (front and back)
-      const frontWallGeometry = new THREE.PlaneGeometry(wallWidth, wallHeight);
-      const backWallGeometry = new THREE.PlaneGeometry(wallWidth, wallHeight);
+  ): Promise<void> {
+    return new Promise<void>((resolve) => {
+      Promise.all([
+        this.loadTexture("/textures/lobby/Ground078_1K-JPG_Color.jpg"),
+        this.loadTexture("/textures/lobby/Ground078_1K-JPG_NormalGL.jpg"),
+        this.loadTexture("/textures/lobby/Ground078_1K-JPG_Roughness.jpg"),
+      ]).then(([brickColor, brickNormal, brickRoughness]) => {
+        [brickColor, brickNormal, brickRoughness].forEach((map) => {
+          map.wrapS = map.wrapT = THREE.RepeatWrapping;
+          map.repeat.set(8, 4);
+        });
+        const wallMaterial = new THREE.MeshStandardMaterial({
+          map: brickColor,
+          normalMap: brickNormal,
+          roughnessMap: brickRoughness,
+          side: THREE.DoubleSide,
+        });
+        // Create walls without doors (front and back)
+        const frontWallGeometry = new THREE.BoxGeometry(wallWidth, wallHeight, Lobby.WallThickness);
+        const backWallGeometry = new THREE.BoxGeometry(wallWidth, wallHeight, Lobby.WallThickness);
 
-      // Position them
-      frontWallGeometry.applyMatrix4(
-        new THREE.Matrix4().makeTranslation(
-          0,
-          wallHeight / 2,
-          -Lobby.LobbyWidth / 2
-        )
-      );
-      backWallGeometry.applyMatrix4(
-        new THREE.Matrix4().makeTranslation(
-          0,
-          wallHeight / 2,
-          Lobby.LobbyWidth / 2
-        )
-      );
-
-      // Create left and right walls with doors
-      const leftWallGeometries: THREE.BufferGeometry[] = [];
-      const rightWallGeometries: THREE.BufferGeometry[] = [];
-
-      for (const pos of doorPositions.left) {
-        leftWallGeometries.push(
-          createWallWithDoorInCenter(
-            WallSegmentWidth,
-            wallHeight,
-            doorWidth,
-            doorHeight
-          ).applyMatrix4(
-            new THREE.Matrix4().makeTranslation(pos, 0, -Lobby.LobbyLength / 2)
+        // Position them
+        frontWallGeometry.applyMatrix4(
+          new THREE.Matrix4().makeTranslation(
+            0,
+            wallHeight / 2,
+            -Lobby.LobbyWidth / 2
           )
         );
-      }
-
-      for (const pos of doorPositions.right) {
-        rightWallGeometries.push(
-          createWallWithDoorInCenter(
-            WallSegmentWidth,
-            wallHeight,
-            doorWidth,
-            doorHeight
-          ).applyMatrix4(
-            new THREE.Matrix4().makeTranslation(pos, 0, Lobby.LobbyLength / 2)
+        backWallGeometry.applyMatrix4(
+          new THREE.Matrix4().makeTranslation(
+            0,
+            wallHeight / 2,
+            Lobby.LobbyWidth / 2
           )
         );
-      }
 
-      // Merge left and right walls
-      const leftWallGeometry = mergeGeometries(leftWallGeometries);
-      leftWallGeometry.applyMatrix4(
-        new THREE.Matrix4().makeRotationY(Math.PI / 2)
-      );
-      const rightWallGeometry = mergeGeometries(rightWallGeometries);
-      rightWallGeometry.applyMatrix4(
-        new THREE.Matrix4().makeRotationY(Math.PI / 2)
-      );
+        // Create left and right walls with doors
+        const leftWallGeometries: THREE.BufferGeometry[] = [];
+        const rightWallGeometries: THREE.BufferGeometry[] = [];
 
-      // Create meshes
-      const frontWall = new THREE.Mesh(frontWallGeometry, wallMaterial);
-      const backWall = new THREE.Mesh(backWallGeometry, wallMaterial);
-      const leftWall = new THREE.Mesh(leftWallGeometry, wallMaterial);
-      const rightWall = new THREE.Mesh(rightWallGeometry, wallMaterial);
+        for (const pos of doorPositions.left) {
+          leftWallGeometries.push(
+            createWallWithDoorInCenter(
+              WallSegmentWidth,
+              wallHeight,
+              doorWidth,
+              doorHeight
+            ).applyMatrix4(
+              new THREE.Matrix4().makeTranslation(pos, 0, -Lobby.LobbyLength / 2)
+            )
+          );
+        }
 
-      // Add walls to the scene
-      this.lobbyGroup.add(frontWall, backWall, leftWall, rightWall);
-      this.walls.push(frontWall, backWall, leftWall, rightWall);
+        for (const pos of doorPositions.right) {
+          rightWallGeometries.push(
+            createWallWithDoorInCenter(
+              WallSegmentWidth,
+              wallHeight,
+              doorWidth,
+              doorHeight
+            ).applyMatrix4(
+              new THREE.Matrix4().makeTranslation(pos, 0, Lobby.LobbyLength / 2)
+            )
+          );
+        }
+
+        // Merge left and right walls
+        const leftWallGeometry = mergeGeometries(leftWallGeometries);
+        leftWallGeometry.applyMatrix4(
+          new THREE.Matrix4().makeRotationY(Math.PI / 2)
+        );
+        const rightWallGeometry = mergeGeometries(rightWallGeometries);
+        rightWallGeometry.applyMatrix4(
+          new THREE.Matrix4().makeRotationY(Math.PI / 2)
+        );
+
+        // Create meshes
+        const frontWall = new THREE.Mesh(frontWallGeometry, wallMaterial);
+        const backWall = new THREE.Mesh(backWallGeometry, wallMaterial);
+        const leftWall = new THREE.Mesh(leftWallGeometry, wallMaterial);
+        const rightWall = new THREE.Mesh(rightWallGeometry, wallMaterial);
+        leftWall.name = "doorWall";
+        rightWall.name = "doorWall";
+        // Add walls to the scene
+        this.lobbyGroup.add(frontWall, backWall, leftWall, rightWall);
+        this.walls.push(frontWall, backWall, leftWall, rightWall);
+        resolve();
+      });
     });
   }
 
-  private initDoors(): void {
-    this.loader.load("/models/lobby/medieval_door.glb", (gltf) => {
-      const door = gltf.scene;
-      door.scale.set(0.06, 0.06, 0.06);
+  private async initDoors(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.loader.load("/models/lobby/doors.glb", (gltf) => {
+        const door = gltf.scene;
+        console.log("the glb file for door is ", door);
+        door.name = "Door";
+        door.scale.set(0.6, 0.6, 0.6);
 
-      Lobby.DoorPositions.forEach(({ x, z, rotation }) => {
-        const newDoor = door.clone();
-        newDoor.position.set(x, 0, z);
-        if (rotation) newDoor.rotation.y = rotation;
-        this.lobbyGroup.add(newDoor);
-        this.doors.push(newDoor);
+        Lobby.DoorPositions.forEach(({ x, z, rotation }) => {
+          const newDoor = door.clone();
+          newDoor.position.set(x, 0, z);
+          if (rotation) newDoor.rotation.y = rotation;
+          this.lobbyGroup.add(newDoor);
+          this.doors.push(newDoor);
+        });
+        resolve();
       });
     });
   }
 }
+
