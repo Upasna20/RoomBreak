@@ -67,7 +67,7 @@ export class GameControls {
 
     public update(): void {
         if (this.controls.isLocked) {
-            const speed = 1;
+            const speed = 2;
             if (this.moveForward) this.controls.moveForward(speed);
             if (this.moveBackward) this.controls.moveForward(-speed);
             if (this.moveLeft) this.controls.moveRight(-speed);

@@ -1,8 +1,10 @@
 import * as THREE from "three";
-import { Player } from "./Player.ts";
+// import { Player } from "./Player.ts";
 import { GameControls } from "./Controls.ts";
 import { Lobby } from "../scenes/Lobby.ts";
 import { MusicRoom } from "../scenes/musicRoom/musicRoom.ts";
+import { LiteraryRoom } from "../scenes/literaryRoom.ts";
+// import { DirectionalLightHelper } from "three";
 
 import { PainterRoom } from "../scenes/painterRoom/painterRoom.ts";
 
@@ -15,7 +17,7 @@ export class Game {
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
   public controls: GameControls;
-  private currentRoom: Lobby | MusicRoom|PainterRoom;
+  private currentRoom: Lobby | MusicRoom| PainterRoom | LiteraryRoom;
   private rooms: Record<string, Room>;
 
   constructor() {
@@ -40,13 +42,19 @@ export class Game {
     this.scene.add(lobby.lobbyGroup);
     const musicRoom = new MusicRoom(this.scene, this.renderer) 
     this.scene.add(musicRoom.musicGroup);
-    musicRoom.musicGroup.position.copy(new THREE.Vector3(202, 0, 140.5));
+    musicRoom.musicGroup.position.copy(new THREE.Vector3(-202, 0, 140.5))
+
+    const literaryRoom = new LiteraryRoom();
+    this.scene.add(literaryRoom.literaryGroup);
+    literaryRoom.literaryGroup.position.copy(new THREE.Vector3(-201, 0, -70));
+
+    literaryRoom.literaryGroup.rotateY(Math.PI / 2);  // 90 degrees in radians
 
     const painterRoom = new PainterRoom(this.scene, this.renderer);
     this.scene.add(painterRoom.painterGroup);
-    painterRoom.painterGroup.position.copy( new THREE.Vector3(262, 0, 140.5));
+    painterRoom.painterGroup.position.copy( new THREE.Vector3(202, 0, 140.5));
 
-    this.currentRoom = painterRoom;
+    // this.currentRoom = painterRoom;
     
     this.setupLighting();
     this.setupEventListeners();
@@ -67,6 +75,27 @@ export class Game {
   private setupLighting(): void {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.1); // Soft global light
     this.scene.add(ambientLight);
+
+    // const sunlight = new THREE.DirectionalLight(0xffffff, 5); // Increase intensity for more light
+    // sunlight.position.set(-200, 200, -400); // Adjust position for better light direction
+    // sunlight.target.position.set(-200, 0, -100); // Target the center of the room
+    // sunlight.castShadow = true;
+    //
+    // sunlight.shadow.camera.near = 0.1;
+    // sunlight.shadow.camera.far = 500;
+    // sunlight.shadow.camera.left = -200;
+    // sunlight.shadow.camera.right = 200;
+    // sunlight.shadow.camera.top = 200;
+    // sunlight.shadow.camera.bottom = -200;
+    //
+    // sunlight.shadow.mapSize.width = 4096;
+    // sunlight.shadow.mapSize.height = 4096;
+    // sunlight.shadow.bias = -0.0010;
+    //
+    // this.scene.add(sunlight);
+    // Add light helper
+    // const lightHelper = new DirectionalLightHelper(sunlight, 10);
+    // this.scene.add(lightHelper);
   }
 
   private setupEventListeners(): void {
@@ -87,7 +116,8 @@ export class Game {
     // if (this.rooms[this.currentRoom]) {
     //   this.rooms[this.currentRoom].update();
     // }
-
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.render(this.scene, this.camera);
   }
 }
