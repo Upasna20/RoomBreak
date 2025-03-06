@@ -1,57 +1,19 @@
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
-import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
-import { createWallWithDoorInRightCorner } from "../../utils";
-import { Lobby } from "../Lobby";
 import { BaseRoom } from "../BaseRoom";
-import { createBoundingBoxes } from "../../core/Collision";
 
 
 export class PainterRoom extends BaseRoom {
-  public painterGroup: THREE.Group;
+  painterRoomReady: Promise<void>;
 
   constructor(scene: THREE.Scene, renderer: THREE.WebGLRenderer) {
+    console.log("initialising from the painter Room file");
     super(scene, renderer);
-    this.painterGroup = this.roomGroup; // Alias for backward compatibility
-    this.painterGroup.name = "PainterGroup";
+    this.renderer = renderer
+    this.painterRoomReady = this.init();
   }
 
   protected async init() {
     await super.init(); // ✅ Calls parent init
-    createBoundingBoxes(this, this.painterGroup); // ✅ Additional logic for PainterRoom
-  }
-
-  protected createWalls(roomMaterial: THREE.MeshStandardMaterial): void {
-    const wallLength = PainterRoom.wallLength;
-    const wallHeight = PainterRoom.wallHeight;
-
-    const wallGeometry = new THREE.BoxGeometry(wallLength, wallHeight, PainterRoom.WallThickness);
-    const wallPositions = [
-      { x: 0, y: wallHeight / 2, z: -wallLength / 2 },
-      { x: 0, y: wallHeight / 2, z: wallLength / 2 },
-      { x: wallLength / 2, y: wallHeight / 2, z: 0, rotation: Math.PI / 2 },
-      { x: -wallLength / 2, y: 0, z: 0, rotation: Math.PI / 2, scaleZ: 0.5 },
-    ];
-
-    wallPositions.forEach((pos) => {
-      if (pos.scaleZ) {
-        const wallGeometry = createWallWithDoorInRightCorner(wallLength, wallHeight, PainterRoom.DoorWidth, PainterRoom.DoorHeight);
-        const wall = new THREE.Mesh(wallGeometry, roomMaterial);
-        wall.name = "doorWall";
-        wall.position.set(pos.x, pos.y, pos.z);
-        if (pos.rotation) wall.rotateY(pos.rotation);
-        wall.castShadow = true;
-        this.roomGroup.add(wall);
-      }
-      else {
-        const wall = new THREE.Mesh(wallGeometry, roomMaterial);
-        wall.position.set(pos.x, pos.y, pos.z);
-        if (pos.rotation) wall.rotateY(pos.rotation);
-        wall.castShadow = true;
-        this.roomGroup.add(wall);
-      }
-    });
   }
 
   protected async loadModels(): Promise<void> {
@@ -62,7 +24,7 @@ export class PainterRoom extends BaseRoom {
       { path: "models/painterRoom/caterpillar.glb", scale: [80, 80, 80], position: [-90, 48, 90], name: "caterpillar" },
       { path: "models/painterRoom/Lantern.glb", scale: [2, 2, 2], position: [-90, 0, 90], name: "lantern" },
       { path: "models/painterRoom/canvas.glb", scale: [20, 20, 20], position: [-90, 40, 60], name: "canvas" },
-      { path: "models/painterRoom/collage_wall.glb", scale: [80, 80, 80], position: [0, 50, 94], rotation: [-Math.PI/2, 0, 0], name: "collage_wall" },
+      { path: "models/painterRoom/collage_wall.glb", scale: [80, 80, 80], position: [0, 50, 94], rotation: [-Math.PI / 2, 0, 0], name: "collage_wall" },
       { path: "models/painterRoom/SheenWoodLeatherSofa.glb", scale: [40, 40, 40], position: [-20, 0, -84], name: "sheenwood" },
     ];
 
@@ -80,7 +42,8 @@ export class PainterRoom extends BaseRoom {
             data.rotation[2]);
           model.name = data.name;
           this.clickableModels.push(model);
-          this.roomGroup.add(model);
+          this.boundingBoxes.push(new THREE.Box3().setFromObject(model));
+          this.scene.add(model);
         } catch (error) {
           console.error(`Error loading ${data.name}:`, error);
         }

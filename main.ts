@@ -1,7 +1,7 @@
-import { Game } from './src/core/Game.ts';
+import { gameInstance } from './src/core/Game.ts';
 
 document.addEventListener('DOMContentLoaded', () => {
-    const game = new Game();
+    const game = gameInstance;
 
     // Create and configure the start button
     const startButton: HTMLButtonElement = document.createElement('button');
