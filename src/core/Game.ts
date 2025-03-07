@@ -19,6 +19,7 @@ export class Game {
   public player: Player;
   public mainScene!: MainScene;
   public mainGroup: THREE.Group;
+  public currRoom: string;
 
   constructor() {
     this.scene = new THREE.Scene();
@@ -35,18 +36,27 @@ export class Game {
     this.player = new Player(this.camera);
     this.scene.add(this.player.object);
     this.mainGroup = new THREE.Group();
+  
 
 
     // Initialize core components
     this.controls = new GameControls(this.camera, this.renderer.domElement);
 
     this.setupLighting();
+    this.init();
+  }
+
+  private async init(){
+    this.setupLighting();
     this.scene.background = new THREE.Color(0x202020); // Dark gray
     // camera settings
     this.camera.position.set(0, 1.5, 0); // Higher up
     this.camera.lookAt(0, 5, 14); // Look at the floor
 
-    this.loadScenes()
+    await this.loadScenes();
+    console.log("The rooms are");
+    console.log(this.rooms["PainterRoom"]);
+
   }
 
 
@@ -78,30 +88,32 @@ export class Game {
 
 
 
-    updatePlayerRoom(playerPosition: THREE.Vector3) {
+    private updatePlayerRoom(playerPosition: THREE.Vector3) {
       const { x, z } = playerPosition;
-      let currRoom: string;
+      let currRoom: string = "lobby";
   
       if (x >= -20.592 && x <= -7.8 && z >= 2.27 && z <= 15.119) {
         currRoom = "PainterRoom";
-        this.currentRoom = this.rooms["PainterRoom"];
+        this.currentRoom = this.rooms["painterRoom"];
       } 
       else if (x >= -20.602 && x <= -7.75 && z >= -15.086 && z <= -2.318) {
         currRoom = "GymRoom";
-        this.currentRoom = this.rooms["GymRoom"];
+        this.currentRoom = this.rooms["gymRoom"];
       } 
       else if (x >= 7.8 && x <= 20.59 && z >= -15.119 && z <= -2.27) {
         currRoom = "LiteratureRoom";
-        this.currentRoom = this.rooms["LiteratureRoom"];
+        this.currentRoom = this.rooms["literatureRoom"];
       } 
       else if (x >= 7.7 && x <= 20.451 && z >= 2.4 && z <= 15.17) {
         currRoom = "MusicRoom";
-        this.currentRoom = this.rooms["MusicRoom"];
+        this.currentRoom = this.rooms["musicRoom"];
       } 
       else {
         currRoom = "lobby";
         this.currentRoom = this.rooms["lobby"]; // Player is in the lobby or an undefined area
       }
+      console.log("Current room is ", currRoom);
+      this.currRoom = currRoom;
   
     }
   
@@ -142,8 +154,7 @@ export class Game {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.updatePlayerRoom(this.player.object.position);
-    this.player.update(this.mainScene);   // Updates player's position based on camera
-
+    this.player.update(this.mainScene, this.currentRoom);   // Updates player's position based on camera
     this.renderer.render(this.scene, this.camera);
   }
 }

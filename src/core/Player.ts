@@ -21,16 +21,33 @@ export class Player {
     this.boundingBox = new THREE.Box3().setFromObject(this.object);
   }
 
-  update(mainScene: MainScene): void {
-    const prevPlayerPos = this.object.position.clone();
-    this.syncPositionWithCamera();
-    // checking collision with the wall
-    for (const {box} of mainScene.boundingBoxes) {
+  update(mainScene: MainScene, currentRoom: Room): void {
+    if (!currentRoom) {
+        console.error("Error: currentRoom is undefined");
+        return;
+      }
+  
+      if (!currentRoom.boundingBoxes) {
+        console.error("Error: currentRoom.boundingBoxes is undefined");
+        return;
+      }
+  
+      const prevPlayerPos = this.object.position.clone();
+      this.syncPositionWithCamera();
+  
+      // Merging bounding boxes safely
+      const mergedBoundingBoxes: THREE.Box3[] = [
+        ...(mainScene?.boundingBoxes || []), // Ensure extracting only Box3
+        ...(currentRoom?.boundingBoxes || []) // Ensure safe access
+      ];
+  
+  
+      for (const box of mergedBoundingBoxes) {
         if (this.boundingBox.intersectsBox(box)) {
-            this.resetPosition(prevPlayerPos);
-            return;
+          this.resetPosition(prevPlayerPos);
+          return;
         }
-    }
+      }
 }
 
 private syncPositionWithCamera(): void {

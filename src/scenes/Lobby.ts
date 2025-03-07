@@ -11,7 +11,7 @@ export class Lobby {
   private scene: THREE.Scene;
   public lobbyGroup: THREE.Group;
 
-  public boundingBoxes: { box: THREE.Box3, object?: THREE.Object3D, pos?: string }[] = [];
+  public boundingBoxes: THREE.Box3[] = [];
   lobbyReady: Promise<void>;
   protected loader = new GLTFLoader();
 

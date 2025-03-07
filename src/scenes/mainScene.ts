@@ -5,7 +5,7 @@ import { gameInstance } from "../core/Game";
 export class MainScene {
   loader: GLTFLoader;
   mainSceneModel!: THREE.Object3D; // Allow undefined initially
-  boundingBoxes: { box: THREE.Box3, object: THREE.Mesh }[] = []; // Store bounding boxes
+  boundingBoxes: THREE.Box3[] = []; // Store bounding boxes
   ready: Promise<void>;
 
 
@@ -62,7 +62,7 @@ export class MainScene {
       if (child instanceof THREE.Mesh && child.name !== "Ground") {
         // // Get the local bounding box
         const localBox = new THREE.Box3().setFromObject(child);
-        this.boundingBoxes.push({ box: localBox, object: child });
+        this.boundingBoxes.push(localBox);
         // Optional: Visualize the bounding box
         // const boxHelper = new THREE.Box3Helper(localBox, new THREE.Color(0xff0000));
         // this.scene.add(boxHelper);
