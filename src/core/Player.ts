@@ -5,12 +5,13 @@ export class Player {
   public object: THREE.Mesh; // Player object
   public boundingBox: THREE.Box3; // Bounding box for collision
   private camera: THREE.Camera; // Reference to the camera
+  public playerHeight: number = 0.9;
 
   constructor(camera: THREE.Camera) {
     this.camera = camera;
 
     // Create a simple box to represent the player
-    const geometry = new THREE.BoxGeometry(0.2, 0.4, 0.1);
+    const geometry = new THREE.BoxGeometry(0.2, 0.4, this.playerHeight);
     const material = new THREE.MeshBasicMaterial({ color: 0xDAF7A6 });
     this.object = new THREE.Mesh(geometry, material);
 

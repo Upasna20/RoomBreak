@@ -1,7 +1,7 @@
 
 import * as THREE from "three";
 import { BaseRoom } from "./BaseRoom";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { gameInstance } from "../core/Game";
 
 
 export class LiteratureRoom extends BaseRoom {
@@ -16,6 +16,8 @@ export class LiteratureRoom extends BaseRoom {
 
   protected async init() {
     await super.init(); // ✅ Calls parent init
+    this.loadModels();
+    console.log("This is the literature Group", this.clickableModels);
   }
 
 
@@ -24,10 +26,10 @@ export class LiteratureRoom extends BaseRoom {
     console.log("Loading the models");
 
     const modelData = [
-      { path: "models/literaryRoom/wild_west_theme_small_window_no_glass.glb", scale: [0.3, 0.3, 0.3], position: [0, 0, 0], rotation: [0, Math.PI / 2, 0], name: "window" },
-      { path: "models/literaryRoom/victorian_bookshelf.glb", scale: [30, 30, 30], position: [0, 0, 0], rotation: [0, Math.PI + Math.PI / 2, 0], name: "bookshelf" },
-      { path: "models/literaryRoom/dusty_old_bookshelf_free.glb", scale: [35, 35, 35], position: [0, 0, 0], rotation: [0, Math.PI + Math.PI / 2, 0], name: "bookshelf1" },
-      { path: "models/literaryRoom/old_desk_scene.glb", scale: [39, 30, 30], position: [0, 0, 0], rotation: [0, Math.PI + Math.PI / 2, 0], name: "desk" }
+      // { path: "models/literaryRoom/wild_west_theme_small_window_no_glass.glb", scale: [0.03, 0.03, 0.03], position: [20, 0, -15], rotation: [0, Math.PI / 2, 0], name: "window" },
+      { path: "models/literaryRoom/compressed_ktx2/victorian_bookshelf_ktx2.glb", scale: [2, 1.5, 2], position: [15, 0, -14], rotation: [0, Math.PI + Math.PI / 2, 0], name: "bookshelf" },
+      // { path: "models/literaryRoom/dusty_old_bookshelf_free.glb", scale: [3.5, 3.5, 3.5], position: [0, 0, 0], rotation: [0, Math.PI + Math.PI / 2, 0], name: "bookshelf1" },
+      { path: "models/literaryRoom/compressed_ktx2/old_desk_scene_ktx2.glb", scale: [2.3, 1.2, 1], position: [19.5, 1, -8], rotation: [0, Math.PI + Math.PI / 2, 0], name: "desk" }
     ];
 
     await Promise.all(
@@ -45,6 +47,7 @@ export class LiteratureRoom extends BaseRoom {
           model.name = data.name;
           this.clickableModels.push(model);
           this.boundingBoxes.push(new THREE.Box3().setFromObject(model));
+          gameInstance.mainGroup.add(model);
           this.scene.add(model);
         } catch (error) {
           console.error(`Error loading ${data.name}:`, error);

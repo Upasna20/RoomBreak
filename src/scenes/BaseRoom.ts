@@ -12,21 +12,32 @@ export abstract class BaseRoom {
   static wallLength: number = 13;
   renderer: THREE.WebGLRenderer;
 
+  // 🔹 Static KTX2Loader (Shared across all instances)
+  private static ktx2Loader: KTX2Loader | null = null;
+
   constructor(scene: THREE.Scene, renderer: THREE.WebGLRenderer) {
     this.scene = scene;
+    this.renderer = renderer;
+
+    // 🔹 Initialize GLTFLoader
     this.loader = new GLTFLoader();
-this.renderer = renderer;
+    this.loader.setMeshoptDecoder(MeshoptDecoder);
 
-// 🔹 Set MeshoptDecoder (no need for "new" keyword)
-this.loader.setMeshoptDecoder(MeshoptDecoder);
+    // 🔹 Ensure KTX2Loader is only created once
+    if (!BaseRoom.ktx2Loader) {
+      console.log("Initializing KTX2Loader...");
+      BaseRoom.ktx2Loader = new KTX2Loader();
+      BaseRoom.ktx2Loader.setTranscoderPath(
+        "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r143/examples/js/libs/basis/"
+      );
+      BaseRoom.ktx2Loader.detectSupport(this.renderer);
+    } else {
+      console.log("Reusing existing KTX2Loader instance.");
+    }
 
-// 🔹 Attach KTX2 Loader (for texture compression)
-const ktx2Loader = new KTX2Loader();
-ktx2Loader.setTranscoderPath("https://cdn.jsdelivr.net/gh/mrdoob/three.js@r143/examples/js/libs/basis/");
-ktx2Loader.detectSupport(this.renderer); // Ensure KTX2 support
-this.loader.setKTX2Loader(ktx2Loader);
+    // 🔹 Attach shared KTX2Loader to GLTFLoader
+    this.loader.setKTX2Loader(BaseRoom.ktx2Loader);
   }
-
 
   protected async init() {
     // this.initLighting();

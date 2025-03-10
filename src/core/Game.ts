@@ -50,7 +50,7 @@ export class Game {
     this.setupLighting();
     this.scene.background = new THREE.Color(0x202020); // Dark gray
     // camera settings
-    this.camera.position.set(0, 1.5, 0); // Higher up
+    this.camera.position.set(0, this.player.playerHeight, 0); // Higher up
     this.camera.lookAt(0, 5, 14); // Look at the floor
 
     await this.loadScenes();
