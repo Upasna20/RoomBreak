@@ -19,7 +19,7 @@ export class Game {
   public player: Player;
   public mainScene!: MainScene;
   public mainGroup: THREE.Group;
-  public currRoom: string;
+  public currRoom!: string;
 
   constructor() {
     this.scene = new THREE.Scene();

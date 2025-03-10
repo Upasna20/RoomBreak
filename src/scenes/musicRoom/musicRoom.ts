@@ -27,7 +27,7 @@ export class MusicRoom extends BaseRoom {
       { path: "models/musicRoom/compressed_ktx2/compressed_harmonium_ktx2.glb", scale: [.15, .105, .15], position: [19.5, 0, 8], rotation: [0, -Math.PI / 2, 0], name: "harmonium" },
       // { path: "models/musicRoom/guitar.glb", scale: [6, 6, 6], position: [-50, 40, 96], rotation: [-Math.PI / 2, Math.PI, Math.PI / 2], name: "guitar2" },
       // { path: "models/musicRoom/guitar_hero_guitar.glb", scale: [6, 6, 6], position: [-20, 40, 90], rotation: [0, Math.PI, 0], name: "guitar_hero" },
-      { path: "models/musicRoom/compressed_ktx2/compressed_drum_ktx2.glb", scale: [2, 1.8, 2], position: [15, 0, 5], rotation: [0, 0, 0], name: "drum" },
+      { path: "models/musicRoom/compressed_ktx2/compressed_drum_ktx2.glb", scale: [2, 1.8, 2], position: [12.8, 0, 5], rotation: [0, 0, 0], name: "drum" },
       // { path: "models/musicRoom/krishna.glb", scale: [20, 20, 20], position: [-66, -10, -66], rotation: [0, Math.PI / 2, 0], name: "krishna" },
       { path: "models/musicRoom/compressed_ktx2/compressed_speaker_ktx2.glb", scale: [0.012, 0.012, 0.012], position: [19, 0, 14], rotation: [0, 0, 0], name: "speaker" },
     ];

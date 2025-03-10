@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type {Room} from "../core/Game"
+import type { Room } from "../core/Game"
 import { MainScene } from "../scenes/mainScene";
 export class Player {
   public object: THREE.Mesh; // Player object
@@ -22,50 +22,51 @@ export class Player {
   }
 
   update(mainScene: MainScene, currentRoom: Room): void {
-    if (!currentRoom) {
-        console.error("Error: currentRoom is undefined");
-        return;
-      }
-  
-      if (!currentRoom.boundingBoxes) {
-        console.error("Error: currentRoom.boundingBoxes is undefined");
-        return;
-      }
-  
-      const prevPlayerPos = this.object.position.clone();
-      this.syncPositionWithCamera();
-  
-      // Merging bounding boxes safely
-      const mergedBoundingBoxes: THREE.Box3[] = [
-        ...(mainScene?.boundingBoxes || []), // Ensure extracting only Box3
-        ...(currentRoom?.boundingBoxes || []) // Ensure safe access
-      ];
-  
-  
-      for (const box of mergedBoundingBoxes) {
-        if (this.boundingBox.intersectsBox(box)) {
-          this.resetPosition(prevPlayerPos);
-          return;
-        }
-      }
-}
 
-private syncPositionWithCamera(): void {
+    const prevPlayerPos = this.object.position.clone();
+    this.syncPositionWithCamera();
+    if (!currentRoom) {
+      console.error("Error: currentRoom is undefined");
+      return;
+    }
+
+    if (!currentRoom.boundingBoxes) {
+      console.error("Error: currentRoom.boundingBoxes is undefined");
+      return;
+    }
+
+
+    // Merging bounding boxes safely
+    const mergedBoundingBoxes: THREE.Box3[] = [
+      ...(mainScene?.boundingBoxes || []), // Ensure extracting only Box3
+      ...(currentRoom?.boundingBoxes || []) // Ensure safe access
+    ];
+
+
+    for (const box of mergedBoundingBoxes) {
+      if (this.boundingBox.intersectsBox(box)) {
+        this.resetPosition(prevPlayerPos);
+        return;
+      }
+    }
+  }
+
+  private syncPositionWithCamera(): void {
     this.object.position.set(
-        this.camera.position.x,
-        this.camera.position.y, // Adjust Y for player height
-        this.camera.position.z
+      this.camera.position.x,
+      this.camera.position.y, // Adjust Y for player height
+      this.camera.position.z
     );
     // this.boundingBox.applyMatrix4(this.object.matrixWorld);
-     this.boundingBox.setFromObject(this.object);
-}
+    this.boundingBox.setFromObject(this.object);
+  }
 
 
-private resetPosition(prevPlayerPos: THREE.Vector3): void {
+  private resetPosition(prevPlayerPos: THREE.Vector3): void {
     this.object.position.copy(prevPlayerPos);
     this.camera.position.copy(prevPlayerPos);
     this.boundingBox.setFromObject(this.object);
-}
+  }
 
 
 }
