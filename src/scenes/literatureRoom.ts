@@ -46,7 +46,7 @@ export class LiteratureRoom extends BaseRoom {
             data.rotation[2]);
           model.name = data.name;
           this.clickableModels.push(model);
-          this.boundingBoxes.push(new THREE.Box3().setFromObject(model));
+          this.boundingBoxes.push({box: new THREE.Box3().setFromObject(model), object: model});
           gameInstance.mainGroup.add(model);
           this.scene.add(model);
         } catch (error) {

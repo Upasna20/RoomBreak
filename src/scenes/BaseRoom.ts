@@ -7,7 +7,7 @@ export abstract class BaseRoom {
   protected scene: THREE.Scene;
   protected clickableModels: THREE.Object3D[] = [];
   protected loader = new GLTFLoader();
-  public boundingBoxes: THREE.Box3[] = [];
+  public boundingBoxes: { box: THREE.Box3, object: THREE.Group }[] = [];
   static ceilingHeight: number = 6.6;
   static wallLength: number = 13;
   renderer: THREE.WebGLRenderer;

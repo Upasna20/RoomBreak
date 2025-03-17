@@ -23,7 +23,7 @@ export class MusicRoom extends BaseRoom {
     console.log("Loading the models");
     const modelData = [
       { path: "models/musicRoom/compressed_ktx2/compressed_electric_guitar_lowpoly_model_ktx2.glb", scale: [.4, .4, .4], position: [7.3, 1.5, 8], rotation: [0, Math.PI/2, 3 * Math.PI / 8], name: "red_guitar" },
-      { path: "models/musicRoom/compressed_ktx2/compressed_sitar_and__surbahar_ktx2.glb", scale: [0.3, 0.3, 0.3], position: [13, -1.3, 14], rotation: [0, Math.PI, 0], name: "piano" },
+      { path: "models/musicRoom/compressed_ktx2/compressed_sitar_and__surbahar_ktx2.glb", scale: [0.3, 0.3, 0.3], position: [13, -1.3, 14], rotation: [0, Math.PI, 0], name: "sitar" },
       { path: "models/musicRoom/compressed_ktx2/compressed_harmonium_ktx2.glb", scale: [.15, .105, .15], position: [19.5, 0, 8], rotation: [0, -Math.PI / 2, 0], name: "harmonium" },
       // { path: "models/musicRoom/guitar.glb", scale: [6, 6, 6], position: [-50, 40, 96], rotation: [-Math.PI / 2, Math.PI, Math.PI / 2], name: "guitar2" },
       // { path: "models/musicRoom/guitar_hero_guitar.glb", scale: [6, 6, 6], position: [-20, 40, 90], rotation: [0, Math.PI, 0], name: "guitar_hero" },
@@ -46,7 +46,7 @@ export class MusicRoom extends BaseRoom {
             data.rotation[2]);
           model.name = data.name;
           this.clickableModels.push(model);
-          this.boundingBoxes.push(new THREE.Box3().setFromObject(model));
+          this.boundingBoxes.push({box: new THREE.Box3().setFromObject(model), object: model});
           gameInstance.mainGroup.add(model);
           this.scene.add(model);
           // console.log("position of the musicroom model is", model.position); // Logs { x, y, z }

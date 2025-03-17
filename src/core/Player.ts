@@ -40,7 +40,7 @@ export class Player {
     // Merging bounding boxes safely
     const mergedBoundingBoxes: THREE.Box3[] = [
       ...(mainScene?.boundingBoxes || []), // Ensure extracting only Box3
-      ...(currentRoom?.boundingBoxes || []) // Ensure safe access
+      ...(currentRoom?.boundingBoxes.map(obj => obj.box || [])) // Ensure safe access
     ];
 
 

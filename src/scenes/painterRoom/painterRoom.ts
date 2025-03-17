@@ -30,28 +30,28 @@ export class PainterRoom extends BaseRoom {
       { path: "models/painterRoom/compressed_ktx2/SheenWoodLeatherSofa_ktx2.glb", scale: [1.9, 1.9, 1.9], position: [-12, 0, 13], rotation: [0, Math.PI, 0], name: "sheenwood" },
     ];
 
-   await Promise.all(
-         modelData.map(async (data) => {
-           try {
-             const gltf = await this.loader.loadAsync(data.path);
-             const model = gltf.scene;
-             model.scale.set(data.scale[0], data.scale[1], data.scale[2]);
-             model.position.set(data.position[0],
-               data.position[1],
-               data.position[2]);
-             if (data.rotation) model.rotation.set(data.rotation[0],
-               data.rotation[1],
-               data.rotation[2]);
-             model.name = data.name;
-             this.clickableModels.push(model);
-             this.boundingBoxes.push(new THREE.Box3().setFromObject(model));
-             gameInstance.mainGroup.add(model);
-             this.scene.add(model);
-           } catch (error) {
-             console.error(`Error loading ${data.name}:`, error);
-           }
-         })
-       );
-       console.log("Finished loading the music room models");
+    await Promise.all(
+      modelData.map(async (data) => {
+        try {
+          const gltf = await this.loader.loadAsync(data.path);
+          const model = gltf.scene;
+          model.scale.set(data.scale[0], data.scale[1], data.scale[2]);
+          model.position.set(data.position[0],
+            data.position[1],
+            data.position[2]);
+          if (data.rotation) model.rotation.set(data.rotation[0],
+            data.rotation[1],
+            data.rotation[2]);
+          model.name = data.name;
+          this.clickableModels.push(model);
+          this.boundingBoxes.push({ box: new THREE.Box3().setFromObject(model), object: model });
+          gameInstance.mainGroup.add(model);
+          this.scene.add(model);
+        } catch (error) {
+          console.error(`Error loading ${data.name}:`, error);
+        }
+      })
+    );
+    console.log("Finished loading the music room models");
   }
 }
