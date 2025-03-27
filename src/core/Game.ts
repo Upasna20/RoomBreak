@@ -43,14 +43,11 @@ export class Game {
 
     // Initialize core components
     this.controls = new GameControls(this.camera, this.renderer.domElement);
-
-    this.setupLighting();
-    this.setupCrosshair();
-    this.init();
   }
 
-  private async init() {
+  public async init() {
     this.setupLighting();
+    this.setupCrosshair();
     this.scene.background = new THREE.Color(0x202020);
     this.camera.position.set(0, this.player.playerHeight, 0);
     this.camera.lookAt(0, 5, 14);

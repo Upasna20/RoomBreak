@@ -14,7 +14,10 @@
     "vite": "^6.1.0"
   },
   "dependencies": {
+    "@types/ws": "^8.18.0",
     "three": "^0.173.0",
-    "three-bvh-csg": "^0.0.16"
+    "three-bvh-csg": "^0.0.16",
+    "ts-node": "^10.9.2",
+    "ws": "^8.18.1"
   }
 }

@@ -1,22 +1,19 @@
 import { gameInstance } from './src/core/Game.ts';
 
 document.addEventListener('DOMContentLoaded', () => {
-    const game = gameInstance;
+    const introScreen = document.getElementById('intro-screen') as HTMLDivElement;
+    const startButton = document.getElementById('start-button') as HTMLButtonElement;
+    const joinButton = document.getElementById('join-button') as HTMLButtonElement;
 
-    // Create and configure the start button
-    const startButton: HTMLButtonElement = document.createElement('button');
-    startButton.textContent = 'Start Game';
-    startButton.style.position = 'absolute';
-    startButton.style.top = '50%';
-    startButton.style.left = '50%';
-    startButton.style.transform = 'translate(-50%, -50%)';
-
-    startButton.addEventListener('click', () => {
+    function startGame() {
+        introScreen.style.display = 'none';
+        const game = gameInstance;
+        game.init(); // Initialize game
         if (game.controls && typeof game.controls.lock === 'function') {
             game.controls.lock();
         }
-        startButton.style.display = 'none';
-    });
+    }
 
-    document.body.appendChild(startButton);
+    startButton.addEventListener('click', startGame);
+    joinButton.addEventListener('click', startGame); // Modify if different behavior needed
 });
