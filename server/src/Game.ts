@@ -1,21 +1,33 @@
 import { WebSocket } from 'ws'; 
 
+interface Player {
+    username: string;
+    ws: WebSocket;
+    serialNumber: number;
+}
+
 export class Game {
     id: string;
-    players: Set<WebSocket>;
+    players: Player[];
     maxPlayers: number = 5;
     isLocked: boolean = false;
+    private nextSerialNumber: number = 0;  // Tracks next serial number
 
     constructor(id: string) {
         this.id = id;
-        this.players = new Set();
+        this.players = [];
     }
 
-    addPlayer(player: WebSocket): boolean {
-        if (this.isLocked || this.players.size >= this.maxPlayers) {
+    addPlayer(username: string, ws: WebSocket): boolean {
+        if (this.isLocked || this.players.length >= this.maxPlayers) {
             return false; // Room is full or locked
         }
-        this.players.add(player);
+        const player: Player = { 
+            username, 
+            ws, 
+            serialNumber: this.nextSerialNumber++ // Assign and increment serial number
+        };
+        this.players.push(player);
         return true;
     }
 
@@ -25,11 +37,14 @@ export class Game {
 
     broadcast(message: object) {
         const data = JSON.stringify(message);
-        console.log("Total players", this.players)
-        this.players.forEach(player => player.send(data));
+        this.players.forEach(player => player.ws.send(data));
     }
 
     getPlayerCount(): number {
-        return this.players.size;
+        return this.players.length;
+    }
+
+    getPlayers(): Player[] {
+        return this.players;
     }
 }

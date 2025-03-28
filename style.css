@@ -78,6 +78,7 @@ input[type="text"] {
     border-radius: 5px;
     outline: none;
     transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    margin-bottom: 15px
 }
 
 /* Input focus effect */
@@ -98,13 +99,3 @@ input[type="text"]:-webkit-autofill {
     color: white !important;
 }
 
-#username-input {
-    margin-bottom: 15px; /* Adds space below the input */
-}
-
-canvas {
-    display: block;
-    width: 100vw; /* Full width */
-    height: calc(100vh - 100px); /* Leaves 50px space at top and bottom */
-    margin: 50px 0; /* Creates the top and bottom spacing */
-}

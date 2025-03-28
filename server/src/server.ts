@@ -13,20 +13,28 @@ wss.on('connection', (ws: WebSocket) => {
     ws.on('message', (data) => {
         const message = JSON.parse(data.toString());
         if (message.type === 'CREATE_GAME') {
+            const { username } = message;
+            if (!username) return;
             const gameCode = generateRoomCode();
             const game = new Game(gameCode);
             games.set(gameCode, game);
-            game.addPlayer(ws);
+            game.addPlayer(username, ws);
             ws.send(JSON.stringify({ type: 'GAME_CREATED', gameCode }));
         }
 
         if (message.type === 'JOIN_GAME') {
-            const game = games.get(message.gameCode);
+            const { gameCode, username } = message;
+            if (!username || !gameCode) return;
+            const game = games.get(gameCode);
             if (game) {
-                game.addPlayer(ws);
-                ws.send(JSON.stringify({ type: 'GAME_JOIN_SUCCESS', gameCode: message.gameCode }));
+                const success = game.addPlayer(username, ws);
+                if (success) {
+                    ws.send(JSON.stringify({ type: 'GAME_JOIN_SUCCESS', gameCode }));
+                } else {
+                    ws.send(JSON.stringify({ type: 'GAME_JOIN_FAILURE', reason: "Room full or locked" }));
+                }
             } else {
-                ws.send(JSON.stringify({ type: 'GAME_JOIN_FAILURE' }));
+                ws.send(JSON.stringify({ type: 'GAME_JOIN_FAILURE', reason: "Game not found" }));
             }
         }
 

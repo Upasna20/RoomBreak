@@ -39,13 +39,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         else if (message.type === 'GAME_JOIN_SUCCESS') {
             introScreen.style.display = 'none';
+            joinGameContainer.style.display = 'none';
             waitingScreen.style.display = 'flex';
             roomCodeDisplay.textContent = `Room Code: ${message.gameCode}`;
             waitingMessage.style.display = 'block';
         }
         else if (message.type === 'GAME_JOIN_FAILURE') {
-            joinErrorMessage.textContent = "Room not found!";
+            joinErrorMessage.textContent = message.reason;
             joinErrorMessage.style.display = 'block';
+            joinButton.disabled = false;
         }
         else if (message.type === 'GAME_LOCKED') {
             gameEntry.style.display = 'none';
@@ -80,9 +82,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     joinGameButton.addEventListener('click', () => {
-        usernameInput.style.display = 'none';
+        // usernameInput.style.display = 'none';
+        // joinGameButton.style.display = 'none';
+        introScreen.style.display = 'none';
         createGameButton.style.display = 'none';
-        joinGameContainer.style.display = 'block';
+        joinGameContainer.style.display = 'flex';
     });
 
 
