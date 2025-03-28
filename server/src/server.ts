@@ -1,29 +1,43 @@
 import { WebSocketServer, WebSocket } from 'ws';
+import { Game } from './Game.js';
 
-// Create a WebSocket server listening on port 8080
 const wss = new WebSocketServer({ port: 8080 });
+const games = new Map<string, Game>();
 
-console.log('✅ WebSocket server started on ws://localhost:8080');
+function generateRoomCode(): string {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    return Array.from({ length: 5 }, () => letters[Math.floor(Math.random() * letters.length)]).join('');
+}
 
 wss.on('connection', (ws: WebSocket) => {
-    console.log('🔗 A client connected.');
+    ws.on('message', (data) => {
+        const message = JSON.parse(data.toString());
+        if (message.type === 'CREATE_GAME') {
+            const gameCode = generateRoomCode();
+            const game = new Game(gameCode);
+            games.set(gameCode, game);
+            game.addPlayer(ws);
+            ws.send(JSON.stringify({ type: 'GAME_CREATED', gameCode }));
+        }
 
-    // Send a welcome message to the client
-    ws.send('👋 Hello from WebSocket server!');
+        if (message.type === 'JOIN_GAME') {
+            const game = games.get(message.gameCode);
+            if (game) {
+                game.addPlayer(ws);
+                ws.send(JSON.stringify({ type: 'GAME_JOIN_SUCCESS', gameCode: message.gameCode }));
+            } else {
+                ws.send(JSON.stringify({ type: 'GAME_JOIN_FAILURE' }));
+            }
+        }
 
-    // Handle incoming messages from the client
-    ws.on('message', (message) => {
-        console.log(`📩 Received message: ${message}`);
-        ws.send(`📬 Server received: ${message}`);
-    });
-
-    // Handle client disconnection
-    ws.on('close', () => {
-        console.log('❌ A client disconnected.');
-    });
-
-    // Handle errors
-    ws.on('error', (err) => {
-        console.error('🚨 WebSocket error:', err);
+        if (message.type === 'START_GAME') {
+            const game = games.get(message.gameCode);
+            if (game) {
+                game.lockGame();
+                game.broadcast({ type: 'GAME_LOCKED', playerCount: game.getPlayerCount() });
+            }
+        }
     });
 });
+
+console.log('WebSocket server running on ws://localhost:8080');

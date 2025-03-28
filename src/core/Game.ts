@@ -36,7 +36,6 @@ export class Game {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = true;
-    document.body.appendChild(this.renderer.domElement);
     this.player = new Player(this.camera);
     this.scene.add(this.player.object);
     this.mainGroup = new THREE.Group();
@@ -46,6 +45,9 @@ export class Game {
   }
 
   public async init() {
+    document.body.appendChild(this.renderer.domElement);
+    // this.renderer.setSize(window.innerWidth, 680); // Or 1854 based on condition
+
     this.setupLighting();
     this.setupCrosshair();
     this.scene.background = new THREE.Color(0x202020);

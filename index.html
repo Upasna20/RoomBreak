@@ -7,10 +7,32 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="intro-screen">
-        <h1>Welcome to the Game</h1>
-        <button id="start-button">Start Game</button>
-        <button id="join-button">Join Game</button>
+    <div id="game-entry" style="display: none;">
+        <div id="intro-screen">
+			<input type="text" id="username-input" placeholder="Enter your name">
+			<div class="button-container">
+				<button id="create-game-button">Create Game</button>
+				<button id="join-game-button">Join Game</button>
+			</div>
+			<p id="loading-text" style="display: none;">Creating game...</p>
+		</div>
+		
+		<div id="join-game-screen" style="display: none;">
+			<input type="text" id="room-code-input" placeholder="Enter Room Code">
+			<button id="join-game-submit">Join</button>
+			<p id="join-error-message" style="display: none; color: red;">Room not found</p>
+		</div>
+		
+
+        <div id="waiting-screen" style="display: none;">
+            <p id="room-code"></p>
+            <p id="waiting-message" style="display: none;">Waiting for the host to start the game...</p>
+            <button id="start-game-button" style="display: none;">Start Game</button>
+        </div>
+
+        <div id="loading-overlay" style="display: none;">
+            <p>Loading...</p>
+        </div>
     </div>
 
     <script type="module" src="main.ts"></script>

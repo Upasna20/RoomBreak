@@ -12,10 +12,15 @@ html {
     align-items: center;
 }
 
-#intro-screen {
-    position: absolute;
-    top: 0;
-    left: 0;
+#game-entry {
+    display: flex;
+    align-items: center;
+}
+
+#intro-screen, 
+#waiting-screen, 
+#loading-overlay, 
+#join-game-screen {
     width: 100vw;
     height: 100vh;
     display: flex;
@@ -26,18 +31,80 @@ html {
     text-align: center;
 }
 
+/* Ensures only one of these screens is visible at a time */
+.hidden {
+    display: none !important;
+}
+
+#start-game-button {
+    position: relative; /* Prevents unwanted absolute positioning */
+    margin-top: 20px;
+}
+
+.button-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Adds spacing between buttons */
+    align-items: center;
+}
+
 button {
-    margin: 10px;
-    padding: 10px 20px;
-    font-size: 20px;
-    cursor: pointer;
-    border: none;
+    width: 200px;
+    padding: 12px 20px;
     background-color: #444;
     color: white;
+    border: none;
     border-radius: 5px;
-    transition: background 0.2s ease-in-out;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.2s ease-in-out, transform 0.1s ease-in-out;
 }
 
 button:hover {
     background-color: #666;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+input[type="text"] {
+    width: 250px;
+    padding: 10px;
+    font-size: 16px;
+    color: white;
+    background: #222;
+    border: 2px solid #444;
+    border-radius: 5px;
+    outline: none;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* Input focus effect */
+input[type="text"]:focus {
+    border-color: #888;
+    box-shadow: 0 0 5px rgba(136, 136, 136, 0.5);
+}
+
+/* Placeholder styling */
+input[type="text"]::placeholder {
+    color: #aaa;
+    opacity: 0.7;
+}
+
+/* Disable autofill background color */
+input[type="text"]:-webkit-autofill {
+    background-color: #222 !important;
+    color: white !important;
+}
+
+#username-input {
+    margin-bottom: 15px; /* Adds space below the input */
+}
+
+canvas {
+    display: block;
+    width: 100vw; /* Full width */
+    height: calc(100vh - 100px); /* Leaves 50px space at top and bottom */
+    margin: 50px 0; /* Creates the top and bottom spacing */
 }
