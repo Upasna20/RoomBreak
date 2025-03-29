@@ -4,6 +4,7 @@ import { wsClient } from './src/network/wsClient.ts';
 
 let gameCode = '';
 let gameStart = false;
+let localSerialNumber: number | null = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     const usernameInput = document.getElementById("username-input") as HTMLInputElement;
@@ -36,6 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
             roomCodeDisplay.textContent = `Room Code: ${gameCode}`;
             loadingText.style.display = 'none';
             startGameButton.style.display = 'block';
+            localSerialNumber = message.serialNumber;
+            console.log("Serial number is", localSerialNumber);
         }
         else if (message.type === 'GAME_JOIN_SUCCESS') {
             introScreen.style.display = 'none';
@@ -54,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gameInstance.init();
             gameStart = true;
             gameInstance.controls?.lock?.();
+            const otherPlayers = message.players.filter(p => p.serialNumber !== localSerialNumber);
         }
     });
 
