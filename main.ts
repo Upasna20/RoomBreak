@@ -5,6 +5,7 @@ import { wsClient } from './src/network/wsClient.ts';
 let gameCode = '';
 let gameStart = false;
 let localSerialNumber: number | null = null;
+let localPlayerPosition: {x: number, y: number, z: number} | null = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     const usernameInput = document.getElementById("username-input") as HTMLInputElement;
@@ -39,6 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
             startGameButton.style.display = 'block';
             localSerialNumber = message.serialNumber;
             console.log("Serial number is", localSerialNumber);
+            localPlayerPosition = message.position;
+            console.log("My position", localPlayerPosition)
         }
         else if (message.type === 'GAME_JOIN_SUCCESS') {
             introScreen.style.display = 'none';
@@ -46,6 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
             waitingScreen.style.display = 'flex';
             roomCodeDisplay.textContent = `Room Code: ${message.gameCode}`;
             waitingMessage.style.display = 'block';
+            localSerialNumber = message.serialNumber;
+            console.log("Serial number is", localSerialNumber);
+            localPlayerPosition = message.position;
+            console.log("My position", localPlayerPosition)
         }
         else if (message.type === 'GAME_JOIN_FAILURE') {
             joinErrorMessage.textContent = message.reason;
