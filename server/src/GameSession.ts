@@ -48,6 +48,7 @@ export class GameSession {
 
     lockGame() {
         this.isLocked = true;
+        console.log("Game Locked!")
     }
 
     broadcast(message: object) {

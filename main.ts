@@ -5,7 +5,7 @@ import { wsClient } from './src/network/wsClient.ts';
 let gameCode = '';
 let gameStart = false;
 let localSerialNumber: number | null = null;
-let localPlayerPosition: {x: number, y: number, z: number} | null = null;
+let localPlayerPosition: { x: number, y: number, z: number } | null = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     const usernameInput = document.getElementById("username-input") as HTMLInputElement;
@@ -25,30 +25,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const waitingMessage = document.getElementById('waiting-message') as HTMLParagraphElement;
 
     gameEntry.style.display = 'flex';
+    const username = usernameInput.value.trim();
 
     wsClient.onMessage((message) => {
         console.log("The message is");
         console.log(message)
-        if (message.type === 'GAME_CREATED') {
-            console.log("wohooo, created!")
+        if (message.type === 'GAME_CREATED' || message.type === 'GAME_JOIN_SUCCESS') {
             introScreen.style.display = 'none';
-            usernameInput.style.display = 'none';
-            waitingScreen.style.display = 'flex';
-            gameCode = message.gameCode;
-            roomCodeDisplay.textContent = `Room Code: ${gameCode}`;
-            loadingText.style.display = 'none';
-            startGameButton.style.display = 'block';
-            localSerialNumber = message.serialNumber;
-            console.log("Serial number is", localSerialNumber);
-            localPlayerPosition = message.position;
-            console.log("My position", localPlayerPosition)
-        }
-        else if (message.type === 'GAME_JOIN_SUCCESS') {
-            introScreen.style.display = 'none';
-            joinGameContainer.style.display = 'none';
             waitingScreen.style.display = 'flex';
             roomCodeDisplay.textContent = `Room Code: ${message.gameCode}`;
-            waitingMessage.style.display = 'block';
+            gameCode = message.gameCode;
+            if (message.type === 'GAME_CREATED') {
+                usernameInput.style.display = 'none';
+                loadingText.style.display = 'none';
+                startGameButton.style.display = 'block';
+            }
+            else {
+                joinGameContainer.style.display = 'none';
+                waitingMessage.style.display = 'block';
+            }
+
             localSerialNumber = message.serialNumber;
             console.log("Serial number is", localSerialNumber);
             localPlayerPosition = message.position;
@@ -61,10 +57,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         else if (message.type === 'GAME_LOCKED') {
             gameEntry.style.display = 'none';
-            gameInstance.init();
-            gameStart = true;
+    
+            if (localSerialNumber === null || localPlayerPosition === null) {
+                console.error("Local player data is missing");
+                return;
+            }
+    
+            const localPlayerInfo = {
+                serialNumber: localSerialNumber,
+                username: username,
+                position: localPlayerPosition
+            };
+    
+            const otherPlayers = message.players
+                .filter(p => p.serialNumber !== localSerialNumber)
+                .map(p => ({
+                    serialNumber: p.serialNumber,
+                    username: p.username,
+                    position: p.position
+                }));
+    
+            gameInstance.init(localPlayerInfo, otherPlayers, gameCode);
             gameInstance.controls?.lock?.();
-            const otherPlayers = message.players.filter(p => p.serialNumber !== localSerialNumber);
+            gameStart = true;
+        }
+        else if (message.type === 'POSITION_UPDATE') {
+            let serialNumber = message.serialNumber;
+            let newPos = message.newPos;
+            gameInstance.foreignEntities.get(serialNumber)?.player.updateFromServer(newPos);
         }
     });
 
@@ -73,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         createGameButton.disabled = username === "";
         joinGameButton.disabled = username === "";
     }
-    
+
     updateButtonState()
 
 
@@ -114,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     startGameButton.addEventListener('click', () => {
         wsClient.send({ type: 'START_GAME', gameCode });
         startGameButton.disabled = true;
+        waitingScreen.style.display = 'none';
         document.getElementById('loading-overlay')!.style.display = 'block';
     });
 

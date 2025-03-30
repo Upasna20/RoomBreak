@@ -1,11 +1,12 @@
 import * as THREE from "three";
 import { GameControls } from "./Controls.ts";
 import { MainScene } from "../scenes/mainScene.ts";
-import { Player } from "./Player.ts";
+import { LocalPlayer } from "./Players/LocalPlayer.ts";
 import { Lobby } from "../scenes/Lobby.ts";
 import { MusicRoom } from "../scenes/musicRoom/musicRoom.ts";
 import { PainterRoom } from "../scenes/painterRoom/painterRoom.ts";
 import { LiteratureRoom } from "../scenes/literatureRoom.ts";
+import { ForeignPlayer } from "./Players/ForeignPlayer.ts";
 
 export type Room = Lobby | MusicRoom | PainterRoom | LiteratureRoom;
 
@@ -16,7 +17,6 @@ export class Game {
   public controls: GameControls;
   private currentRoom!: Room;
   private rooms!: Record<string, Room>;
-  public player: Player;
   public mainScene!: MainScene;
   public mainGroup: THREE.Group;
   public currRoom!: string;
@@ -24,6 +24,9 @@ export class Game {
   private crosshair!: HTMLDivElement;
   private crosshairEnabled: boolean = false;
   private raycastingEnabled: boolean = false;
+  public localPlayer!: LocalPlayer;
+  public foreignEntities = new Map<number, { player: ForeignPlayer; boundingBox: THREE.Box3 }>();
+  public gameCode!: string;
 
   constructor() {
     this.scene = new THREE.Scene();
@@ -36,23 +39,43 @@ export class Game {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = true;
-    this.player = new Player(this.camera);
-    this.scene.add(this.player.object);
     this.mainGroup = new THREE.Group();
+
 
     // Initialize core components
     this.controls = new GameControls(this.camera, this.renderer.domElement);
   }
 
-  public async init() {
+  public async init(localPlayerInfo: { serialNumber: number; username: string; position: { x: number; y: number; z: number; }; }, otherPlayers: { serialNumber: number; username: string; position: { x: number; y: number; z: number; }; }[], gameCode: string) {
+    this.gameCode = gameCode;
     document.body.appendChild(this.renderer.domElement);
     // this.renderer.setSize(window.innerWidth, 680); // Or 1854 based on condition
 
+    this.camera.position.set(localPlayerInfo.position.x, LocalPlayer.playerHeight, localPlayerInfo.position.z);
+    this.camera.lookAt(0, 5, 14);
+
+    // instantiating the localPlayer
+    this.localPlayer = new LocalPlayer(localPlayerInfo.serialNumber, localPlayerInfo.username, this.camera)
+
+    // instantiating the foreign Players
+    otherPlayers.forEach(playerData => {
+      const foreignPlayer = new ForeignPlayer(playerData.serialNumber, playerData.username, new THREE.Vector3(playerData.position.x, playerData.position.y, playerData.position.z));
+
+      // Store both in a single map entry
+      this.foreignEntities.set(playerData.serialNumber, { player: foreignPlayer, boundingBox: foreignPlayer.boundingBox });
+
+      // Add the foreign player object to the scene
+      this.scene.add(foreignPlayer.object);
+  });
+
+
     this.setupLighting();
     this.setupCrosshair();
+
+
+
     this.scene.background = new THREE.Color(0x202020);
-    this.camera.position.set(0, this.player.playerHeight, 0);
-    this.camera.lookAt(0, 5, 14);
+    
 
     await this.loadScenes();
     this.setupEventListeners();
@@ -173,8 +196,8 @@ export class Game {
     this.controls.update();
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    this.updatePlayerRoom(this.player.object.position);
-    this.player.update(this.mainScene, this.currentRoom);
+    this.updatePlayerRoom(this.localPlayer.object.position);
+    this.localPlayer.update(this.mainScene, this.currentRoom);
     this.renderer.render(this.scene, this.camera);
   }
 }

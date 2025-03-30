@@ -1,5 +1,7 @@
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
 import * as THREE from 'three';
+import { wsClient } from '../network/wsClient';
+import { gameInstance } from './Game';
 
 export class GameControls {
     private controls: PointerLockControls;
@@ -7,8 +9,10 @@ export class GameControls {
     private moveBackward: boolean = false;
     private moveLeft: boolean = false;
     private moveRight: boolean = false;
+    private camera: THREE.PerspectiveCamera;
 
-    constructor(camera: THREE.Camera, domElement: HTMLElement) {
+    constructor(camera: THREE.PerspectiveCamera, domElement: HTMLElement) {
+        this.camera = camera;
         this.controls = new PointerLockControls(camera, domElement);
         this.setupKeyboardControls();
     }
@@ -68,10 +72,13 @@ export class GameControls {
     public update(): void {
         if (this.controls.isLocked) {
             const speed = 0.1;
+            if (this.moveForward || this.moveBackward || this.moveLeft || this.moveRight ) wsClient.send({type: "POSITION_CHANGE_REQUEST", gameCode: gameInstance.gameCode, serialNumber: gameInstance.localPlayer.serialNumber, newPos: {x: this.camera.position.x, y: 0, z: this.camera.position.z}});
             if (this.moveForward) this.controls.moveForward(speed);
             if (this.moveBackward) this.controls.moveForward(-speed);
             if (this.moveLeft) this.controls.moveRight(-speed);
             if (this.moveRight) this.controls.moveRight(speed);
         }
+        
+
     }
 }

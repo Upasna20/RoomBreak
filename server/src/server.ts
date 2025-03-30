@@ -58,9 +58,21 @@ wss.on('connection', (ws: WebSocket) => {
                     type: 'GAME_LOCKED',
                     players: game.getPlayers().map(p => ({
                         username: p.username,
-                        serialNumber: p.serialNumber
+                        serialNumber: p.serialNumber,
+                        position: p.position
                     }))
                 });
+            }
+        }
+
+        if (message.type === 'POSITION_CHANGE_REQUEST') {
+            const game = games.get(message.gameCode);
+            if (game) {
+                game.broadcast({
+                    type: 'POSITION_UPDATE',
+                    serialNumber: message.serialNumber,
+                    newPos: message.newPos
+                })
             }
         }
 
